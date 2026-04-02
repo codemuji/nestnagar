@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NestNagar - Chat Inbox</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Poppins:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "inverse-primary": "#c2c8be",
+              "secondary-container": "#caeea2",
+              "background": "#f9faf5",
+              "error": "#ba1a1a",
+              "surface-container-highest": "#e2e3de",
+              "outline-variant": "#c4c8b9",
+              "on-background": "#1a1c19",
+              "error-container": "#ffdad6",
+              "on-secondary-fixed": "#0f2000",
+              "on-secondary-container": "#4f6d2f",
+              "surface-variant": "#e2e3de",
+              "on-surface-variant": "#44483d",
+              "secondary-fixed": "#caeea2",
+              "surface-container-high": "#e7e9e4",
+              "surface-tint": "#5a6057",
+              "primary": "#575e55",
+              "surface-container-low": "#f3f4ef",
+              "on-tertiary": "#ffffff",
+              "on-primary-fixed-variant": "#424840",
+              "surface-dim": "#d9dad6",
+              "on-error-container": "#93000a",
+              "surface": "#f9faf5",
+              "inverse-on-surface": "#f0f1ec",
+              "surface-bright": "#f9faf5",
+              "on-secondary": "#ffffff",
+              "on-tertiary-fixed": "#311300",
+              "on-surface": "#1a1c19",
+              "primary-fixed-dim": "#c2c8be",
+              "on-tertiary-fixed-variant": "#743500",
+              "outline": "#74796b",
+              "surface-container": "#edeee9",
+              "tertiary": "#944600",
+              "on-tertiary-container": "#fffbff",
+              "on-primary": "#ffffff",
+              "on-primary-fixed": "#171d16",
+              "secondary": "#49672a",
+              "tertiary-container": "#b75b0d",
+              "tertiary-fixed": "#ffdbc8",
+              "on-primary-container": "#f8fff3",
+              "tertiary-fixed-dim": "#ffb689",
+              "on-secondary-fixed-variant": "#324e14",
+              "primary-container": "#70766d",
+              "on-error": "#ffffff",
+              "primary-fixed": "#dee4d9",
+              "secondary-fixed-dim": "#afd188",
+              "surface-container-lowest": "#ffffff",
+              "inverse-surface": "#2e312e"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9faf5;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 left-0 w-full flex justify-between items-center px-6 py-4 bg-[#f9faf5]/80 backdrop-blur-md z-50 shadow-[0_4px_24px_rgba(87,94,85,0.04)]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#1b211a]" data-icon="home_work">home_work</span>
+<h1 class="text-xl font-bold text-[#1b211a] tracking-tighter">NestNagar</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-[#575e55] hover:text-[#49672a] transition-colors" data-icon="search">search</button>
+<button class="material-symbols-outlined text-[#575e55] hover:text-[#49672a] transition-colors" data-icon="notifications">notifications</button>
+</div>
+</header>
+<main class="pt-24 pb-24 px-4 max-w-2xl mx-auto">
+<!-- Search & Filter Bar -->
+<section class="mb-8">
+<div class="relative flex items-center bg-surface-container-highest rounded-xl px-4 py-3 group focus-within:bg-surface-container-lowest transition-all">
+<span class="material-symbols-outlined text-outline mr-3" data-icon="chat">chat</span>
+<input class="bg-transparent border-none focus:ring-0 w-full text-on-surface placeholder:text-on-surface-variant" placeholder="Search conversations..." type="text"/>
+</div>
+<div class="flex gap-2 mt-4 overflow-x-auto pb-2 no-scrollbar">
+<button class="bg-secondary-container text-on-secondary-container px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap">All Messages</button>
+<button class="bg-surface-variant text-on-surface-variant px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap">Unread</button>
+<button class="bg-surface-variant text-on-surface-variant px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap">Property Leads</button>
+<button class="bg-surface-variant text-on-surface-variant px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap">Support</button>
+</div>
+</section>
+<!-- Inbox List -->
+<section class="space-y-1">
+<!-- Chat Item 1: Active/Unread -->
+<div class="flex items-center p-4 bg-surface-container-lowest rounded-2xl hover:bg-surface-container transition-colors cursor-pointer group">
+<div class="relative shrink-0">
+<img alt="Avatar" class="w-14 h-14 rounded-full object-cover" data-alt="professional portrait of a friendly real estate agent in a modern suit, outdoor natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGqAbAiX4_2p1XP95Kdf1-dils2kOBcf-hrQGnLJ9JebFGfw4Mq1ILhFlKOyOH6jnOm-l9e2Xi10h-THjNn67_DGsu6JOJncyoaCtuM0lx6D74yaQ5Eo0ekyzxbvXDraEkSKJCEIUKx6k2jTN5XUrVOVrTjyL2iKhByCSSL4jSw3_U0azoia-SaeGxXmlfnvRhKbv16AA5uw9vr1enUWT2JoMvgEmslCHRYXNQEmZc5mbab_o4oJTWYBUSuCFUiMZilJav1nFyZNQ"/>
+<div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-secondary border-2 border-surface-container-lowest rounded-full"></div>
+</div>
+<div class="ml-4 flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<h3 class="font-bold text-on-surface truncate">Marcus Sterling</h3>
+<span class="text-[11px] font-medium text-secondary">2:45 PM</span>
+</div>
+<p class="text-sm font-semibold text-on-surface truncate mt-0.5">The architectural survey is ready for your review. Shall we discuss?</p>
+<div class="flex items-center gap-2 mt-1.5">
+<img class="w-5 h-5 rounded-md object-cover" data-alt="modern architectural home with large glass windows and clean lines at twilight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCF_VL-cs05_j1if_cwMz0X_CqS1WfsryAqJHEzkv3xTVyFrXorKxRFwxAyCOG778amdp8WpScOJzcjr2qJZK3LN4qX5Tmiu9-NN9KaTjyeMyewRxfZaLN2KxG14rRflBb71o4nSm7Nj6V5lmvTY6fxtiYTTWaNSNGAbusSixWVt3qXYk2Fg75iEvmKz5NNMmSNxGN3YQCp7Lrg-_pH-UGk1qrlcho_LL-KLuGZCv5xxHae7zv0nHY_IYOe-sU-lqH1DytkbKmBmGQ"/>
+<span class="text-[10px] text-on-surface-variant font-medium">Skyline Villa #402</span>
+</div>
+</div>
+<div class="ml-3 flex flex-col items-end gap-2">
+<div class="bg-secondary text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full">2</div>
+</div>
+</div>
+<!-- Chat Item 2 -->
+<div class="flex items-center p-4 rounded-2xl hover:bg-surface-container transition-colors cursor-pointer group">
+<div class="relative shrink-0">
+<img alt="Avatar" class="w-14 h-14 rounded-full object-cover" data-alt="close-up portrait of a smiling woman with glasses in a professional studio setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfkrQYtNyIBMsQl_tpoSpKNCIf19Os-ZtcOrrNop8tUaElOhy6RdWx7ul-zBE6NVuormjmRFuYv7wd-vC8ajgyqTkz0j2FsjO69baJwMVwlGyOiWRv6tEMw1kSLjtiarfXNcLVxygZ_ilSo9PhYgM0Y4awM-Li6p9ccFNkVl1jOdJAwuFna4mRMHA3kGx91VdIvOdvdMG_3-uuwNa5NZysuvoEeUPTqdZZndyobiDJZzmNYZTwe0xeCtSibEE-5hnzPpSQl0_V-FY"/>
+</div>
+<div class="ml-4 flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<h3 class="font-medium text-on-surface truncate">Elena Rodriguez</h3>
+<span class="text-[11px] text-on-surface-variant">Yesterday</span>
+</div>
+<p class="text-sm text-on-surface-variant truncate mt-0.5">I've sent the updated rental agreement to your email address.</p>
+<div class="flex items-center gap-2 mt-1.5">
+<img class="w-5 h-5 rounded-md object-cover" data-alt="contemporary apartment interior with bright sunlight and minimalist furniture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkG6CDKBTtuWA3tU-xYeVZNkDLf5xcvDYpoR_GnUMzSxjgwlesRoy5j1owKrw8AkldD5nl-5GVrgkfmLJGTo7DyylD9D8IJHZ0XabSai0m2kgZZ13cY0lWoQUFB35vQ0TqAgXn3PqvMshFpYsQrrfxIVmIkaD6sWOJLZAsyBz9Aqz_WUltwiC23o6p6rfzbFal_p6oyHUNk5qnoGslaPF52uhn4adICsCPdxluNbwXR3N5KvzpwsNjN24wLsxOc0JIUfbTi12-r5M"/>
+<span class="text-[10px] text-on-surface-variant font-medium">Urban Loft - B3</span>
+</div>
+</div>
+</div>
+<!-- Chat Item 3 -->
+<div class="flex items-center p-4 rounded-2xl hover:bg-surface-container transition-colors cursor-pointer group">
+<div class="relative shrink-0">
+<div class="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="groups">groups</span>
+</div>
+</div>
+<div class="ml-4 flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<h3 class="font-medium text-on-surface truncate">Maintenance Group</h3>
+<span class="text-[11px] text-on-surface-variant">Monday</span>
+</div>
+<p class="text-sm text-on-surface-variant truncate mt-0.5"><span class="font-medium">You:</span> Thanks, the elevator seems to be working fine now.</p>
+</div>
+</div>
+<!-- Chat Item 4 -->
+<div class="flex items-center p-4 rounded-2xl hover:bg-surface-container transition-colors cursor-pointer group">
+<div class="relative shrink-0">
+<img alt="Avatar" class="w-14 h-14 rounded-full object-cover" data-alt="professional male profile photo with a neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJF_9JX0s_y53qC88cMqSSPY62z9nurmLEbSIoEomXxBuGaS5H4sjX4XR3nfg6EYhkPbt8VlqAvsFVyVINuafUzHSRausgJbk0BxJZqiaHasTCDkl5EEmbpti7gmF7v-lvOMIApPEuZldnOWENZVybPllb9IcbEGEHggqptazNg6Im8mpKWUFEXi4MPx-0AxQIA3xqalpAwFdcR2DJeyAw9okCc8C8io3IenpCuo2V0XKP_3Os45sKJL0eHhiJHTagrcYeKi0JbyM"/>
+</div>
+<div class="ml-4 flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<h3 class="font-medium text-on-surface truncate">Julian Moore</h3>
+<span class="text-[11px] text-on-surface-variant">Aug 12</span>
+</div>
+<p class="text-sm text-on-surface-variant truncate mt-0.5">Let me know when you want to schedule the virtual tour.</p>
+<div class="flex items-center gap-2 mt-1.5">
+<img class="w-5 h-5 rounded-md object-cover" data-alt="modern bathroom with marble walls and high-end fixtures" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9qpEWsOFg9ETp7_V8K2viIxjyYWUkZEvqXruRlZtbQ8U9z6-WrSZHSPkpM3lyOJZ69jfZ8hQ2pVCyiRERhYQ033ysqIv0dqyJKtcGSn25sCRE3LQTMFQu1jWW_t4aQLHEelZ906YE3IyJA8wd6DK7JoxNaFF1vyirMKBmD9Xn6TmOrvfC6kMKy94dP7OBZCCBsWO-t4i25Sz-hwY2gw_fgdWJN8ok3dnbSWEiAAcRUL2pciU-7Y5DUH_MemX6fBkaYDWaHXXVaps"/>
+<span class="text-[10px] text-on-surface-variant font-medium">Lakeside Estates</span>
+</div>
+</div>
+</div>
+<!-- Chat Item 5 -->
+<div class="flex items-center p-4 rounded-2xl hover:bg-surface-container transition-colors cursor-pointer group">
+<div class="relative shrink-0">
+<img alt="Avatar" class="w-14 h-14 rounded-full object-cover" data-alt="close-up of a young woman smiling subtly with warm natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDC8DKCkfFExhJ-MmeGVDg__FcipKuh-D_dStt__OwGScyFuIeKTUrJn0nik-cJNoxewL61BAHmfCPcpMQfaOHs7hc3Cxt9Shjom1RPTNQhfegvcFSU9LMuXBEe67tPQdjFP4xsUHl9TB-aFFon3DACTNqwrQyxvr6EaRLfeAZzNpR08uPWkV8xzyIPssW-Bj5kCga9HE4BkGXOAOrJ73HSwIPAOL3m8Y8hXhYPs2nB0ifJFnBDHa5dR73KZkZQGc3eSeycy6Pzqjw"/>
+</div>
+<div class="ml-4 flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<h3 class="font-medium text-on-surface truncate">Sarah Jenkins</h3>
+<span class="text-[11px] text-on-surface-variant">Aug 10</span>
+</div>
+<p class="text-sm text-on-surface-variant truncate mt-0.5">The deposit has been confirmed. Welcome home!</p>
+</div>
+</div>
+</section>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-tertiary text-on-tertiary rounded-2xl shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-40">
+<span class="material-symbols-outlined" data-icon="add_comment" style="font-variation-settings: 'FILL' 1;">add_comment</span>
+</button>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 pb-safe bg-[#f9faf5] border-t border-[#c4c8b9]/20 z-50 shadow-[0_-4px_30px_rgba(0,0,0,0.03)] rounded-t-2xl">
+<div class="flex flex-col items-center justify-center text-[#575e55] hover:bg-[#f3f4ef] transition-colors rounded-xl px-3 py-1 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="text-[11px] font-medium uppercase tracking-wider mt-1">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#575e55] hover:bg-[#f3f4ef] transition-colors rounded-xl px-3 py-1 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="handshake">handshake</span>
+<span class="text-[11px] font-medium uppercase tracking-wider mt-1">Partners</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#49672a] bg-[#caeea2]/30 rounded-xl px-4 py-1 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="chat_bubble" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
+<span class="text-[11px] font-bold uppercase tracking-wider mt-1">Chat</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#575e55] hover:bg-[#f3f4ef] transition-colors rounded-xl px-3 py-1 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-[11px] font-medium uppercase tracking-wider mt-1">Profile</span>
+</div>
+</nav>
+</body></html>

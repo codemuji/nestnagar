@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NestNagar - Welcome Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=Poppins:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-lowest": "#ffffff",
+              "inverse-on-surface": "#f0f1ec",
+              "on-tertiary-fixed-variant": "#743500",
+              "outline": "#74796b",
+              "on-primary-fixed": "#171d16",
+              "tertiary-container": "#b75b0d",
+              "on-secondary": "#ffffff",
+              "primary-fixed-dim": "#c2c8be",
+              "surface-container-highest": "#e2e3de",
+              "surface-variant": "#e2e3de",
+              "secondary": "#49672a",
+              "tertiary": "#944600",
+              "on-tertiary-container": "#fffbff",
+              "surface-dim": "#d9dad6",
+              "on-tertiary-fixed": "#311300",
+              "on-surface-variant": "#44483d",
+              "inverse-primary": "#c2c8be",
+              "error-container": "#ffdad6",
+              "primary": "#575e55",
+              "secondary-fixed": "#caeea2",
+              "on-primary": "#ffffff",
+              "on-primary-container": "#f8fff3",
+              "on-error": "#ffffff",
+              "surface-container-high": "#e7e9e4",
+              "surface-container": "#edeee9",
+              "on-surface": "#1a1c19",
+              "tertiary-fixed-dim": "#ffb689",
+              "secondary-fixed-dim": "#afd188",
+              "outline-variant": "#c4c8b9",
+              "primary-fixed": "#dee4d9",
+              "on-secondary-fixed-variant": "#324e14",
+              "on-tertiary": "#ffffff",
+              "surface-bright": "#f9faf5",
+              "on-secondary-container": "#4f6d2f",
+              "surface-tint": "#5a6057",
+              "inverse-surface": "#2e312e",
+              "on-error-container": "#93000a",
+              "primary-container": "#70766d",
+              "secondary-container": "#caeea2",
+              "tertiary-fixed": "#ffdbc8",
+              "surface-container-low": "#f3f4ef",
+              "background": "#f9faf5",
+              "on-background": "#1a1c19",
+              "error": "#ba1a1a",
+              "on-secondary-fixed": "#0f2000",
+              "surface": "#f9faf5",
+              "on-primary-fixed-variant": "#424840"
+            },
+            fontFamily: {
+              "headline": ["Poppins", "Inter", "sans-serif"],
+              "body": ["Inter", "sans-serif"],
+              "label": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .editorial-gradient {
+            background: linear-gradient(135deg, #944600 0%, #b75b0d 100%);
+        }
+        .glass-panel {
+            background: rgba(249, 250, 245, 0.8);
+            backdrop-filter: blur(12px);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body selection:bg-secondary-container selection:text-on-secondary-container overflow-x-hidden">
+<!-- Hero Content Canvas -->
+<main class="min-h-screen flex flex-col md:flex-row">
+<!-- Left: Visual Sanctuary (Asymmetric Layout) -->
+<section class="relative w-full md:w-1/2 min-h-[442px] md:min-h-screen p-6 md:p-12 overflow-hidden flex items-center justify-center bg-surface-container-low">
+<div class="relative w-full h-full max-w-2xl grid grid-cols-12 grid-rows-12 gap-4">
+<!-- Large Primary Image -->
+<div class="col-span-8 row-span-8 rounded-2xl overflow-hidden shadow-2xl z-10">
+<img alt="Modern luxury interior" class="w-full h-full object-cover" data-alt="Luxurious modern living room with floor-to-ceiling windows, earthy tones, organic textures, and soft morning sunlight filtering through trees." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlNSJEXbNF2vqUl3hu9vMSZBDYNftRqS--0yTJPRAH_CLHzlDUzYW3ykQP2g6LDElVKYhxFrG530PHoUZXEPtOND2lh9PR3r3zgFWXzvjf7pshvgcNbOlbv6Bu-swfK5KWdEiwSCzk4ggDHsXqYJVGMEuP4r4-N0lxoIXOst6dpouX_eQ-vrKZGB6fPTpYP9gDHQkcomp41NGr-WXYvEHU-sHUzqQc5w2ThurkjfS1mu5r2EEO2Zg7VuF9WF5S06lFrHZgrdjHIZM"/>
+</div>
+<!-- Secondary Overlap Image -->
+<div class="col-start-6 col-span-7 row-start-6 row-span-6 rounded-2xl overflow-hidden shadow-2xl z-20 border-8 border-surface-container-low">
+<img alt="Architectural exterior" class="w-full h-full object-cover" data-alt="Close up architectural detail of a high-end minimalist villa with white concrete walls and lush tropical greenery in the courtyard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAq5q-00mNYMGbzfekVazzI4S3q8-6aFmoh2gj_yolfDuG2FzYWwNBTq98LKME8zFkSEHbEEpchDPlcmOdRvGm8KLYHJ-KyiQMmgenBD5RB2sFC4P_mfwRYSAhewAEBY-K_CznspvdPcpwnqoQDz2nWuBT1I2YAwiaizAslw5gSnS_SNPSpYxLMV1ceep-4c7A-wJKY7A3ybQL0jbbXWu_oSgneqkgLeow0RzRzQUGpEExwwoXz8w9EvglrgcG8G0R99DeZ3ViDwNQ"/>
+</div>
+<!-- Accented Abstract Shape (Design System Soul) -->
+<div class="absolute -bottom-10 -left-10 w-64 h-64 bg-secondary-fixed opacity-20 rounded-full blur-3xl -z-10"></div>
+<div class="absolute -top-10 right-0 w-48 h-48 bg-tertiary-fixed opacity-30 rounded-full blur-3xl -z-10"></div>
+</div>
+</section>
+<!-- Right: Intentional Onboarding Flow -->
+<section class="w-full md:w-1/2 flex flex-col justify-center px-8 md:px-20 py-16 bg-surface">
+<!-- Branding -->
+<div class="flex items-center gap-3 mb-12">
+<div class="w-12 h-12 bg-secondary flex items-center justify-center rounded-xl">
+<span class="material-symbols-outlined text-on-secondary" style="font-variation-settings: 'opsz' 32;">home_work</span>
+</div>
+<h1 class="text-3xl font-headline font-bold tracking-tighter text-on-surface">NestNagar</h1>
+</div>
+<!-- Value Proposition Hook -->
+<div class="space-y-6 mb-16">
+<h2 class="text-5xl md:text-6xl font-headline font-bold text-on-surface leading-tight tracking-tight">
+                    Find your next <span class="text-secondary">sanctuary.</span>
+</h2>
+<p class="text-lg text-on-surface-variant max-w-md leading-relaxed">
+                    Discover homes that resonate with your lifestyle through our curated gallery of premium, verified listings.
+                </p>
+</div>
+<!-- Bento-style Key Features -->
+<div class="grid grid-cols-1 gap-6 mb-16">
+<!-- Feature 1 -->
+<div class="flex items-start gap-4 p-5 rounded-2xl bg-surface-container-low transition-all hover:bg-surface-container border border-outline-variant/10">
+<div class="bg-surface-container-highest p-3 rounded-lg text-secondary">
+<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Verified Listings</h4>
+<p class="text-sm text-on-surface-variant">Every property is hand-inspected for quality and authenticity.</p>
+</div>
+</div>
+<!-- Feature 2 -->
+<div class="flex items-start gap-4 p-5 rounded-2xl bg-surface-container-low transition-all hover:bg-surface-container border border-outline-variant/10">
+<div class="bg-surface-container-highest p-3 rounded-lg text-secondary">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Direct Chat</h4>
+<p class="text-sm text-on-surface-variant">Connect instantly with homeowners and agents without intermediaries.</p>
+</div>
+</div>
+</div>
+<!-- Action Area -->
+<div class="space-y-6">
+<button class="group w-full md:w-auto px-10 py-5 editorial-gradient text-on-tertiary rounded-xl font-headline font-semibold text-lg flex items-center justify-center gap-3 shadow-xl transition-all hover:scale-[1.02] active:scale-95">
+                    Get Started
+                    <span class="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
+</button>
+<p class="text-sm text-on-surface-variant">
+                    Already have an account? <a class="text-secondary font-bold hover:underline decoration-2 underline-offset-4" href="#">Log in</a>
+</p>
+</div>
+<!-- Footer-style Trust Indicators -->
+<div class="mt-24 pt-8 border-t border-outline-variant/20 flex items-center gap-8 opacity-60">
+<div class="flex flex-col">
+<span class="text-xl font-bold text-on-surface">12k+</span>
+<span class="text-xs uppercase tracking-widest font-medium">Listings</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xl font-bold text-on-surface">4.9/5</span>
+<span class="text-xs uppercase tracking-widest font-medium">Rating</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xl font-bold text-on-surface">24/7</span>
+<span class="text-xs uppercase tracking-widest font-medium">Support</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Contextual Navigation Suppression (Per Requirement: Suppressed on Onboarding) -->
+<!-- But keeping the visual language available if needed for sub-pages -->
+<!-- Optional: Minimalist Top Branding for Mobile -->
+<header class="md:hidden fixed top-0 left-0 w-full glass-panel z-50 px-6 py-4 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">home_work</span>
+<span class="font-headline font-extrabold text-on-surface tracking-tighter">NestNagar</span>
+</div>
+<button class="text-sm font-bold text-secondary">Skip</button>
+</header>
+</body></html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Poppins:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-lowest": "#ffffff",
+              "inverse-on-surface": "#f0f1ec",
+              "on-tertiary-fixed-variant": "#743500",
+              "outline": "#74796b",
+              "on-primary-fixed": "#171d16",
+              "tertiary-container": "#b75b0d",
+              "on-secondary": "#ffffff",
+              "primary-fixed-dim": "#c2c8be",
+              "surface-container-highest": "#e2e3de",
+              "surface-variant": "#e2e3de",
+              "secondary": "#49672a",
+              "tertiary": "#944600",
+              "on-tertiary-container": "#fffbff",
+              "surface-dim": "#d9dad6",
+              "on-tertiary-fixed": "#311300",
+              "on-surface-variant": "#44483d",
+              "inverse-primary": "#c2c8be",
+              "error-container": "#ffdad6",
+              "primary": "#575e55",
+              "secondary-fixed": "#caeea2",
+              "on-primary": "#ffffff",
+              "on-primary-container": "#f8fff3",
+              "on-error": "#ffffff",
+              "surface-container-high": "#e7e9e4",
+              "surface-container": "#edeee9",
+              "on-surface": "#1a1c19",
+              "tertiary-fixed-dim": "#ffb689",
+              "secondary-fixed-dim": "#afd188",
+              "outline-variant": "#c4c8b9",
+              "primary-fixed": "#dee4d9",
+              "on-secondary-fixed-variant": "#324e14",
+              "on-tertiary": "#ffffff",
+              "surface-bright": "#f9faf5",
+              "on-secondary-container": "#4f6d2f",
+              "surface-tint": "#5a6057",
+              "inverse-surface": "#2e312e",
+              "on-error-container": "#93000a",
+              "primary-container": "#70766d",
+              "secondary-container": "#caeea2",
+              "tertiary-fixed": "#ffdbc8",
+              "surface-container-low": "#f3f4ef",
+              "background": "#f9faf5",
+              "on-background": "#1a1c19",
+              "error": "#ba1a1a",
+              "on-secondary-fixed": "#0f2000",
+              "surface": "#f9faf5",
+              "on-primary-fixed-variant": "#424840"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .glass-header {
+            background: rgba(249, 250, 245, 0.8);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col">
+<!-- Top Navigation Shell (TopAppBar) -->
+<header class="fixed top-0 left-0 w-full flex justify-between items-center px-6 py-4 glass-header z-50 shadow-[0_4px_24px_rgba(87,94,85,0.04)]">
+<div class="flex items-center gap-4">
+<button class="p-2 -ml-2 text-primary active:opacity-80 active:scale-95 transition-all">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container-highest">
+<img alt="Marcus Sterling" class="w-full h-full object-cover" data-alt="Close-up portrait of a professional man in his 30s with short hair, smiling warmly against a blurred urban architectural background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuApYRfok0EcTTknd9-e40GUgD3ylLb0pVghxQagWqYSf8Jv3x3bH_lv2fKx13jS_dvg6DfkRrbFvmMKBLWy2gI4IFQ4dIPgP1nluO5UIF83e6YujyoLp0ios_z9pySRSCEZtg4AUmaL1vQbEOF3HG6nPI9chynmm97qLT42jUBfGwipR1GBbxgQltth-33aHDvC00aylzcyqsRkw3kgOq6TWRlnrnCGiD7_eFg3SDDsjVI1aLOxChvlNsuRlbX5tKQL-HD6qnSAqSM"/>
+</div>
+<div>
+<h1 class="font-headline font-semibold text-on-surface tracking-tight leading-tight">Marcus Sterling</h1>
+<p class="text-[11px] font-label text-secondary font-medium uppercase tracking-wider">Skyline Villa #402</p>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4 text-primary">
+<span class="material-symbols-outlined cursor-pointer hover:text-secondary transition-colors duration-300">videocam</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-secondary transition-colors duration-300">call</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-secondary transition-colors duration-300">more_vert</span>
+</div>
+</header>
+<!-- Main Content Canvas: Chat Conversation -->
+<main class="flex-grow pt-24 pb-32 px-6 overflow-y-auto bg-surface space-y-8 max-w-4xl mx-auto w-full">
+<!-- Date Marker -->
+<div class="flex justify-center">
+<span class="px-4 py-1.5 rounded-full bg-surface-container text-primary text-[10px] font-bold uppercase tracking-widest">Today</span>
+</div>
+<!-- Listing Reference Card (Asymmetric) -->
+<div class="flex flex-col md:flex-row gap-4 bg-surface-container-low p-4 rounded-xl border border-outline-variant/10">
+<div class="w-full md:w-32 h-24 rounded-lg overflow-hidden shrink-0">
+<img alt="Skyline Villa" class="w-full h-full object-cover" data-alt="Luxury modern apartment interior with floor-to-ceiling windows showing a city skyline at twilight, warm ambient interior lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD17HlwAPduDRkQ1sQo160pQ_YoJftgGIfoM4YgdO8u0Ckj_HtsYaQVv-b7rxwvjJHqYDiO8aQ84TKXkyEmeQAVDxYlPKKSm_3fJ1JpzNuI8MJMiERvUBgSBG0xlaZMgSJOLXmZ-Yjrx9hRfULFMpZCMYYY-y6JvJPAJzz1spUd-6E61Iaz9Wb65XHl-6pf7O1ktaSJjTszxO3M8BwkQ5qd91pV0QXEui00Wj6E4cQskRjrFVC1y-t0Ha6gFzvJb-qGVeEvCzIEPng"/>
+</div>
+<div class="flex flex-col justify-center">
+<span class="text-[10px] font-bold text-tertiary-container uppercase tracking-widest mb-1">Referenced Listing</span>
+<h3 class="font-headline text-on-surface font-semibold">Skyline Villa #402</h3>
+<p class="text-sm text-primary">Downtown District • $4,200/mo</p>
+<div class="mt-2 flex items-center gap-2 text-secondary font-medium text-xs">
+<span class="material-symbols-outlined text-sm">schedule</span>
+<span>Tour requested: Oct 24, 2:00 PM</span>
+</div>
+</div>
+</div>
+<!-- Message Group: Received -->
+<div class="flex flex-col items-start space-y-1 max-w-[85%]">
+<div class="bg-surface-container-highest px-5 py-4 rounded-2xl rounded-bl-none shadow-sm">
+<p class="text-on-surface leading-relaxed text-[15px]">Hello! I'm interested in the Skyline Villa #402. Is it still available for a viewing this weekend?</p>
+</div>
+<span class="text-[10px] text-primary px-2 font-medium">10:12 AM</span>
+</div>
+<!-- Message Group: Sent -->
+<div class="flex flex-col items-end space-y-1 ml-auto max-w-[85%]">
+<div class="bg-on-surface text-surface px-5 py-4 rounded-2xl rounded-br-none shadow-md">
+<p class="leading-relaxed text-[15px]">Hi Marcus! Yes, the villa is definitely available. I have a slot open at 2:00 PM this Sunday if that works for you?</p>
+</div>
+<div class="flex items-center gap-1.5 px-2">
+<span class="text-[10px] text-primary font-medium">10:14 AM</span>
+<span class="material-symbols-outlined text-[12px] text-secondary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+<!-- Message Group: Received -->
+<div class="flex flex-col items-start space-y-1 max-w-[85%]">
+<div class="bg-surface-container-highest px-5 py-4 rounded-2xl rounded-bl-none shadow-sm">
+<p class="text-on-surface leading-relaxed text-[15px]">That sounds perfect. Should I meet you at the main lobby or is there a specific entrance for the residences?</p>
+</div>
+<span class="text-[10px] text-primary px-2 font-medium">10:15 AM</span>
+</div>
+<!-- Message Group: Sent -->
+<div class="flex flex-col items-end space-y-1 ml-auto max-w-[85%]">
+<div class="bg-on-surface text-surface px-5 py-4 rounded-2xl rounded-br-none shadow-md">
+<p class="leading-relaxed text-[15px]">Please use the main lobby entrance on 5th Avenue. I'll notify the concierge of your arrival.</p>
+</div>
+<span class="text-[10px] text-primary px-2 font-medium">10:18 AM</span>
+</div>
+<!-- Location Shared Bubble -->
+<div class="flex flex-col items-start space-y-1 max-w-[85%]">
+<div class="bg-surface-container-highest p-1 rounded-2xl rounded-bl-none overflow-hidden shadow-sm">
+<div class="w-full h-40 rounded-xl overflow-hidden mb-2 relative">
+<img alt="Map location" class="w-full h-full object-cover" data-alt="Minimalist map interface showing a pinpoint in a clean urban street grid with soft green and grey tones" data-location="Downtown District, New York" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqRqc60FEF4HtqdKSnRN3qQHaPCKGXqcG_hi6rfT3t55vJabG92wNSxb3h7oQRvem6FCkSgiqrJwbbHe3Se87uTDCbsjaGijDoSsn4ubDYA_vGyYIVPC-5ecooomJyOKCjb-AUCjK1TLxMe9JW8mhmSLJ0sO91hZsOU6g6ALDsI4oK_xr2oDzlrzxeJ1zdRfOAoELB_u10yRVFo_Db2YGUCd8a0J1tnNHr0vIfBjpWowKzPj0eJ7krjBSch8aiEvtWYoPhV7H1R1U"/>
+<div class="absolute inset-0 flex items-center justify-center bg-on-surface/10">
+<div class="bg-surface-container-lowest p-2 rounded-full shadow-lg">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+</div>
+</div>
+<div class="px-4 pb-4">
+<p class="text-sm font-semibold text-on-surface">Residence Lobby Entrance</p>
+<p class="text-xs text-primary">1204 5th Avenue, Suite 100</p>
+</div>
+</div>
+<span class="text-[10px] text-primary px-2 font-medium">10:20 AM</span>
+</div>
+</main>
+<!-- Bottom Input Area Shell -->
+<footer class="fixed bottom-0 left-0 w-full bg-surface/90 backdrop-blur-md px-6 py-4 pb-safe-bottom z-50 shadow-[0_-4px_30px_rgba(0,0,0,0.03)] border-t border-outline-variant/10">
+<div class="max-w-4xl mx-auto flex items-end gap-3">
+<!-- Attachment Button -->
+<button class="mb-2 p-2 text-primary hover:text-secondary transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+<!-- Message Input Field -->
+<div class="flex-grow relative">
+<textarea class="w-full bg-surface-container-highest border-none focus:ring-0 rounded-2xl py-3 px-5 text-on-surface placeholder-primary resize-none min-h-[48px] max-h-32 focus:bg-surface-container-lowest transition-colors" placeholder="Type a message..." rows="1"></textarea>
+<div class="absolute right-3 bottom-3 flex items-center gap-2">
+<button class="text-primary hover:text-secondary transition-colors">
+<span class="material-symbols-outlined text-xl">mood</span>
+</button>
+</div>
+</div>
+<!-- Send Button (CTA) -->
+<button class="mb-1 w-11 h-11 flex items-center justify-center rounded-xl bg-tertiary text-on-tertiary shadow-lg shadow-tertiary/20 hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+</footer>
+<!-- Hidden BottomNavBar Suppressed (Transactional/Focused Flow) -->
+</body></html>

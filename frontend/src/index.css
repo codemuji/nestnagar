@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-brand-background text-text-primary font-sans min-h-screen antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-headings font-semibold text-text-primary;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-primary text-brand-white h-12 px-6 rounded-button font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:opacity-90;
+  }
+
+  .btn-secondary {
+    @apply bg-brand-secondary text-brand-white h-12 px-6 rounded-button font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:opacity-90;
+  }
+
+  .btn-cta {
+    @apply bg-brand-cta text-brand-white h-12 px-6 rounded-button font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:opacity-90;
+  }
+
+  .btn-outline {
+    @apply border border-border-default text-text-primary h-12 px-6 rounded-button font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:bg-gray-50;
+  }
+
+  .input-field {
+    @apply w-full h-12 px-4 rounded-input border border-border-default bg-white focus:outline-none focus:border-brand-secondary transition-all;
+  }
+
+  .card {
+    @apply bg-white rounded-card shadow-card p-4 transition-all hover:shadow-hover;
+  }
+}

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NestNagar - Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-lowest": "#ffffff",
+              "inverse-on-surface": "#f0f1ec",
+              "on-tertiary-fixed-variant": "#743500",
+              "outline": "#74796b",
+              "on-primary-fixed": "#171d16",
+              "tertiary-container": "#b75b0d",
+              "on-secondary": "#ffffff",
+              "primary-fixed-dim": "#c2c8be",
+              "surface-container-highest": "#e2e3de",
+              "surface-variant": "#e2e3de",
+              "secondary": "#49672a",
+              "tertiary": "#944600",
+              "on-tertiary-container": "#fffbff",
+              "surface-dim": "#d9dad6",
+              "on-tertiary-fixed": "#311300",
+              "on-surface-variant": "#44483d",
+              "inverse-primary": "#c2c8be",
+              "error-container": "#ffdad6",
+              "primary": "#575e55",
+              "secondary-fixed": "#caeea2",
+              "on-primary": "#ffffff",
+              "on-primary-container": "#f8fff3",
+              "on-error": "#ffffff",
+              "surface-container-high": "#e7e9e4",
+              "surface-container": "#edeee9",
+              "on-surface": "#1a1c19",
+              "tertiary-fixed-dim": "#ffb689",
+              "secondary-fixed-dim": "#afd188",
+              "outline-variant": "#c4c8b9",
+              "primary-fixed": "#dee4d9",
+              "on-secondary-fixed-variant": "#324e14",
+              "on-tertiary": "#ffffff",
+              "surface-bright": "#f9faf5",
+              "on-secondary-container": "#4f6d2f",
+              "surface-tint": "#5a6057",
+              "inverse-surface": "#2e312e",
+              "on-error-container": "#93000a",
+              "primary-container": "#70766d",
+              "secondary-container": "#caeea2",
+              "tertiary-fixed": "#ffdbc8",
+              "surface-container-low": "#f3f4ef",
+              "background": "#f9faf5",
+              "on-background": "#1a1c19",
+              "error": "#ba1a1a",
+              "on-secondary-fixed": "#0f2000",
+              "surface": "#f9faf5",
+              "on-primary-fixed-variant": "#424840"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .editorial-shadow {
+            box-shadow: 0 24px 48px -12px rgba(87, 94, 85, 0.06);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface selection:bg-secondary-container selection:text-on-secondary-container min-h-screen flex items-center justify-center p-6">
+<!-- Main Content Canvas -->
+<main class="w-full max-w-[1200px] grid md:grid-cols-2 bg-surface-container-lowest rounded-[2rem] overflow-hidden editorial-shadow min-h-[720px]">
+<!-- Brand Visual Side (Hidden on Mobile) -->
+<section class="hidden md:block relative overflow-hidden bg-surface-container-low p-12 flex flex-col justify-between">
+<div class="z-10">
+<div class="flex items-center gap-2 mb-8">
+<span class="material-symbols-outlined text-on-surface text-3xl" data-icon="home_work">home_work</span>
+<span class="text-2xl font-bold text-on-surface tracking-tighter">NestNagar</span>
+</div>
+<h1 class="text-4xl lg:text-5xl font-bold text-on-surface leading-[1.1] tracking-tight mb-6">
+                    Curating your <br/> <span class="text-secondary italic">perfect sanctuary.</span>
+</h1>
+<p class="text-on-surface-variant max-w-sm leading-relaxed">
+                    Discover homes that resonate with your lifestyle. NestNagar brings an editorial eye to real estate.
+                </p>
+</div>
+<!-- Image Composition -->
+<div class="absolute inset-0 pointer-events-none">
+<div class="absolute bottom-[-10%] right-[-10%] w-[80%] h-[70%]">
+<img class="w-full h-full object-cover rounded-tl-[3rem] shadow-2xl grayscale-[0.2]" data-alt="luxury modern minimalist home interior with natural wood accents and large windows showing lush greenery in soft morning light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-3yYCcuaNGOgBYezGFyxnPnfY0OMSm3buMo5pTg7yTtP2bO1YCmwYxfS7-RXLT_6UWIX2cJE3x647zK8bTTeZLu4LlKBV1J9iERfwHCZkx70JTpCtnR6XX3OGXs7Gjow7_kTAiqn2DrgICbY97jAJuOWlYjYblrhmf4nvNi5R3nMZmQCbsxOkFYo1EzbyfEAMT5U-g40o6CAfWAVIaX3JruLENmw7-rlcDhT9h5BEfkr4wU8Brv0DWa1CS5XFfkBPlTTKGe7wPnk"/>
+</div>
+<!-- Decorative tonal element -->
+<div class="absolute top-[20%] right-[10%] w-32 h-32 rounded-full bg-secondary-fixed/30 blur-3xl"></div>
+</div>
+<div class="z-10 mt-auto">
+<div class="flex gap-4 items-center">
+<div class="flex -space-x-3">
+<img class="w-10 h-10 rounded-full border-2 border-surface-container-lowest object-cover" data-alt="professional portrait of a young smiling woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3_PbghMw4pJvbamuVyNamIXhNNOaxGmeJkJpGwLiA44eI1YLLgU36rFpzAmWBXnLT3a8goK7Lsy2JpNmtZ9h5RN5wEFzF75WKJUEsvxpYCxK0YK7G6yg-_f7-8dgZ0XHEEPqeUNJTVWdPtZSobcw6wYQvslrxg8-apfNhO9raF8iyQFXf_pwiDxMZqogvOSunZmS4xvfqgeMh3oqbJ4WbelICaKlwy5FFzE946dIRBYANq_U3HNV9vTsv7UYC6ZpPNfcX05CBlOE"/>
+<img class="w-10 h-10 rounded-full border-2 border-surface-container-lowest object-cover" data-alt="professional portrait of a smiling man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3WShl-VWYv75zyq0k5lmO_7Au4rvqF9mqFgnNZDiAjFsWxgNPOY_CG6xYlt8GlqibPJBaUOmjoxwluxDggODXtxH7H59uf6MQa2UlQlIRxabbcfveucLr5YyaVvyZ6MbN4l7UCiD0CqP2dI2eoKi5-KyIP7elr4YJf0h856j1lafY81KctagSZpHI2HQ849RrMD8PvmNg0Z9QeSIUpfUyP0YL5j3F_JoUiXTqF2VbPNi8RCZRKTs-axG545oHvWcmSmh4si_nhWQ"/>
+<div class="w-10 h-10 rounded-full border-2 border-surface-container-lowest bg-secondary-container flex items-center justify-center">
+<span class="text-[10px] font-bold text-on-secondary-container">2k+</span>
+</div>
+</div>
+<p class="text-sm text-on-surface-variant font-medium">Joined the community today</p>
+</div>
+</div>
+</section>
+<!-- Login Form Side -->
+<section class="flex flex-col items-center justify-center p-8 md:p-16 lg:p-24 bg-surface-container-lowest">
+<div class="w-full max-w-md">
+<!-- Mobile Logo -->
+<div class="md:hidden flex items-center justify-center gap-2 mb-12">
+<span class="material-symbols-outlined text-on-surface text-3xl" data-icon="home_work">home_work</span>
+<span class="text-2xl font-bold text-on-surface tracking-tighter">NestNagar</span>
+</div>
+<header class="mb-10 text-center md:text-left">
+<h2 class="text-3xl font-bold text-on-surface mb-3 tracking-tight">Welcome back</h2>
+<p class="text-on-surface-variant font-medium">Enter your details to access your account</p>
+</header>
+<form class="space-y-6">
+<div class="space-y-2">
+<label class="block text-sm font-semibold text-on-surface-variant tracking-wide" for="phone">Phone Number</label>
+<div class="flex gap-3">
+<!-- Country Code Selection -->
+<div class="relative w-28">
+<select class="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-4 pr-10 text-on-surface font-medium appearance-none focus:ring-2 focus:ring-secondary/20 transition-all cursor-pointer" id="country-code">
+<option value="+91">+91</option>
+<option value="+1">+1</option>
+<option value="+44">+44</option>
+<option value="+971">+971</option>
+</select>
+<div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-lg">expand_more</span>
+</div>
+</div>
+<!-- Phone Input -->
+<div class="relative flex-1">
+<input class="w-full bg-surface-container-highest border-none rounded-xl py-4 px-5 text-on-surface font-medium placeholder:text-outline/50 focus:ring-2 focus:ring-secondary/20 transition-all" id="phone" placeholder="00000 00000" type="tel"/>
+<div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-lg">phone</span>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full bg-secondary text-on-secondary font-bold py-4 px-6 rounded-xl shadow-lg shadow-secondary/10 hover:opacity-90 active:scale-[0.98] transition-all duration-200 tracking-wide flex items-center justify-center gap-2" type="submit">
+                        Send OTP
+                        <span class="material-symbols-outlined text-xl">arrow_forward</span>
+</button>
+</form>
+<!-- Divider -->
+<div class="relative my-10">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-outline-variant/30"></div>
+</div>
+<div class="relative flex justify-center text-xs uppercase tracking-widest font-bold">
+<span class="bg-surface-container-lowest px-4 text-outline">or continue with</span>
+</div>
+</div>
+<!-- Social Logins -->
+<div class="grid grid-cols-2 gap-4">
+<button class="flex items-center justify-center gap-3 py-3 border border-outline-variant/30 rounded-xl hover:bg-surface-container-low transition-colors">
+<svg class="w-5 h-5" viewbox="0 0 24 24">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path>
+<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+</svg>
+<span class="text-sm font-semibold text-on-surface">Google</span>
+</button>
+<button class="flex items-center justify-center gap-3 py-3 border border-outline-variant/30 rounded-xl hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-on-surface text-xl">mail</span>
+<span class="text-sm font-semibold text-on-surface">Email</span>
+</button>
+</div>
+<footer class="mt-12 text-center">
+<p class="text-sm text-on-surface-variant font-medium">
+                        New to NestNagar? 
+                        <a class="text-secondary font-bold hover:underline ml-1" href="#">Sign up</a>
+</p>
+</footer>
+</div>
+</section>
+</main>
+<!-- Trust Badges (Fixed Bottom) -->
+<div class="fixed bottom-8 left-0 w-full px-6 flex justify-center pointer-events-none">
+<div class="bg-surface-container-high/80 backdrop-blur-md px-6 py-3 rounded-full flex items-center gap-8 shadow-sm pointer-events-auto">
+<div class="flex items-center gap-2 opacity-60">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Secure SSL</span>
+</div>
+<div class="w-px h-4 bg-outline-variant/30"></div>
+<div class="flex items-center gap-2 opacity-60">
+<span class="material-symbols-outlined text-sm">privacy_tip</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Data Privacy</span>
+</div>
+</div>
+</div>
+</body></html>
