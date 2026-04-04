@@ -120,30 +120,76 @@ export const getPersonalisedListings = async (req, res) => {
       return res.status(400).json({ message: "Personalised feed only available for seekers with a profile" });
     }
 
-    const { listingTypes, budget, priorityLocalities } = user.seekerProfile;
+    const { 
+      listingTypes, budget, priorityLocalities, 
+      locality: mainLocality, genderPreference 
+    } = user.seekerProfile;
 
-    let query = { 
-      status: "available",
-      type: { $in: listingTypes },
-      price: { $gte: budget.min, $lte: budget.max }
-    };
+    // Fetch ALL available listings (not just matches)
+    const allListings = await Listing.find({ status: "available" })
+      .populate("postedBy", "name profilePhoto");
 
-    // Priority localities: we search for these first
-    const personalisedListings = await Listing.find(query)
-      .populate("postedBy", "name profilePhoto")
-      .sort({ createdAt: -1 });
+    // Score and sort listings based on user profile
+    const scoredListings = allListings.map(listing => {
+      let score = 0;
 
-    // Optional: Sort by priority localities (simple implementation)
-    const sortedListings = personalisedListings.sort((a, b) => {
-      const aMatch = priorityLocalities.some(loc => new RegExp(loc, "i").test(a.locality));
-      const bMatch = priorityLocalities.some(loc => new RegExp(loc, "i").test(b.locality));
-      if (aMatch && !bMatch) return -1;
-      if (!aMatch && bMatch) return 1;
-      return 0;
+      // 1. Property Type Match
+      if (listingTypes && listingTypes.length > 0) {
+        if (listingTypes.includes(listing.type)) {
+          score += 20;
+        }
+      }
+
+      // 2. Location Match
+      // Check main locality preference
+      if (mainLocality && listing.locality.toLowerCase().includes(mainLocality.toLowerCase())) {
+        score += 40;
+      }
+      
+      // Check priority localities
+      if (priorityLocalities && priorityLocalities.length > 0) {
+        const matchesPriority = priorityLocalities.some(loc => 
+          listing.locality.toLowerCase().includes(loc.toLowerCase())
+        );
+        if (matchesPriority) {
+          score += 30;
+        }
+      }
+
+      // 3. Budget Match
+      if (listing.price >= budget.min && listing.price <= budget.max) {
+        score += 30;
+      } else if (listing.price <= budget.max * 1.3) {
+        // Within 30% of max budget
+        score += 10;
+      }
+
+      // 4. Gender Preference Match
+      // seeker want 'female' and listing is 'female' or 'any'
+      // listing is 'any' is always a plus for gender matching
+      const seekerWant = genderPreference || "any";
+      const listingAllow = listing.genderAllowed;
+
+      if (seekerWant === "any" || listingAllow === "any" || seekerWant === listingAllow) {
+        score += 20;
+      }
+
+      return {
+        ...listing.toObject(),
+        matchScore: score
+      };
+    });
+
+    // Sort by match score (descending), then by most recent (descending)
+    const sortedListings = scoredListings.sort((a, b) => {
+      if (b.matchScore !== a.matchScore) {
+        return b.matchScore - a.matchScore;
+      }
+      return new Date(b.createdAt) - new Date(a.createdAt);
     });
 
     res.status(200).json({
-      feedMessage: user.seekerProfile.feedMessage,
+      feedMessage: user.seekerProfile.feedMessage || "Here are some listings we found for you.",
       listings: sortedListings
     });
   } catch (error) {

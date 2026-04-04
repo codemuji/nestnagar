@@ -19,7 +19,8 @@ const Button = ({
     <button
       className={twMerge(
         variants[variant],
-        loading && 'opacity-70 cursor-not-allowed flex items-center justify-center gap-2',
+        'flex items-center justify-center gap-2',
+        loading && 'opacity-70 cursor-not-allowed',
         className
       )}
       disabled={loading || props.disabled}

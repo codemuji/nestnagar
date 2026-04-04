@@ -140,7 +140,7 @@ const Home = () => {
           <div className="relative z-10 space-y-4">
             <h3 className="text-3xl font-headings font-bold leading-tight">Join NestNagar <br/>Partner Program</h3>
             <p className="text-white/70 text-sm max-w-[200px]">List your property with us and get verified within 24 hours.</p>
-            <button className="bg-brand-cta text-white px-8 py-4 rounded-2xl font-bold text-sm inline-flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 shadow-xl shadow-brand-cta/20">
+            <button className="bg-brand-cta text-white px-8 py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:scale-105 transition-transform active:scale-95 shadow-xl shadow-brand-cta/20">
               Learn More
               <Sparkles size={16} />
             </button>

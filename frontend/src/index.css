@@ -16,19 +16,19 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-brand-primary text-brand-white h-12 px-6 rounded-button font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:opacity-90;
+    @apply bg-brand-primary text-brand-white h-12 px-6 rounded-button font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:opacity-90 inline-flex items-center justify-center gap-2;
   }
 
   .btn-secondary {
-    @apply bg-brand-secondary text-brand-white h-12 px-6 rounded-button font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:opacity-90;
+    @apply bg-brand-secondary text-brand-white h-12 px-6 rounded-button font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:opacity-90 inline-flex items-center justify-center gap-2;
   }
 
   .btn-cta {
-    @apply bg-brand-cta text-brand-white h-12 px-6 rounded-button font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:opacity-90;
+    @apply bg-brand-cta text-brand-white h-12 px-6 rounded-button font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:opacity-90 inline-flex items-center justify-center gap-2;
   }
 
   .btn-outline {
-    @apply border border-border-default text-text-primary h-12 px-6 rounded-button font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:bg-gray-50;
+    @apply border border-border-default text-text-primary h-12 px-6 rounded-button font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:bg-gray-50 inline-flex items-center justify-center gap-2;
   }
 
   .input-field {
