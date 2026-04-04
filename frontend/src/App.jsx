@@ -40,7 +40,12 @@ function App() {
           path="/" 
           element={
             <ProtectedRoute>
-              {user?.role === 'seeker' ? <Home /> : <Dashboard />}
+              {user?.role === 'seeker' ? (
+                // Redirect to onboarding if seekerProfile is missing or locality is empty (indicating it's just defaults)
+                (!user.seekerProfile || !user.seekerProfile.locality) ? <Navigate to="/onboarding" /> : <Home />
+              ) : (
+                <Dashboard />
+              )}
             </ProtectedRoute>
           } 
         />

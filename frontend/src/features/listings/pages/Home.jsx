@@ -24,13 +24,17 @@ const Home = () => {
         setFeedMessage(data.feedMessage);
       } catch (err) {
         console.error('Failed to fetch listings:', err);
+        // If profile is incomplete, API returns 400
+        if (err.response?.status === 400) {
+          navigate('/onboarding');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchListings();
-  }, []);
+  }, [navigate]);
 
   const handleChat = async (listingId) => {
     try {

@@ -111,8 +111,35 @@ export const updateMe = async (req, res) => {
 
     if (name) user.name = name;
     if (profilePhoto) user.profilePhoto = profilePhoto;
+    
     if (seekerProfile && user.role === "seeker") {
-      user.seekerProfile = { ...user.seekerProfile.toObject(), ...seekerProfile };
+      // If we're completing onboarding for the first time or updating preferences, 
+      // we might want to re-run AI categorization
+      try {
+        const aiDerived = await generateSeekerProfile(seekerProfile);
+        user.seekerProfile = {
+          ...seekerProfile,
+          budget: {
+            min: aiDerived.priceRange?.min || 0,
+            max: aiDerived.priceRange?.max || parseInt(seekerProfile.budget) || 10000
+          },
+          listingTypes: aiDerived.listingTypes || ["single-room"],
+          priorityLocalities: aiDerived.priorityLocalities || [seekerProfile.locality],
+          feedMessage: aiDerived.feedMessage || "Welcome to NestNagar!",
+          showPartnerOption: aiDerived.showPartnerOption ?? (seekerProfile.aloneOrPartner === "partner")
+        };
+      } catch (aiError) {
+        console.error("AI Categorization failed in updateMe:", aiError);
+        // Fallback if AI fails
+        user.seekerProfile = {
+          ...seekerProfile,
+          budget: { min: 0, max: parseInt(seekerProfile.budget) || 10000 },
+          listingTypes: ["single-room"],
+          priorityLocalities: [seekerProfile.locality],
+          feedMessage: "Welcome to NestNagar! Let's find you a great place.",
+          showPartnerOption: seekerProfile.aloneOrPartner === "partner"
+        };
+      }
     }
 
     await user.save();
