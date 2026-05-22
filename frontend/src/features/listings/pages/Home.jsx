@@ -7,24 +7,37 @@ import BottomNav from '../../../components/BottomNav';
 import { getPersonalisedListings } from '../services/listingService';
 import { startConversation } from '../../chat/services/chatService';
 
-const Home = () => {
+const Home = ({ unread, setUnread }) => {
   const [listings, setListings] = useState([]);
   const [feedMessage, setFeedMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
+  const [searchLocality, setSearchLocality] = useState('');
   
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchListings = async () => {
+      setLoading(true);
       try {
-        const data = await getPersonalisedListings();
+        const params = {};
+        if (searchLocality) params.locality = searchLocality;
+        if (activeCategory !== 'All') {
+          // Map UI categories to backend types
+          const categoryMap = {
+            'Rooms': 'single-room',
+            'PGs': 'pg',
+            'Full Flats': 'flat'
+          };
+          params.type = categoryMap[activeCategory] || activeCategory.toLowerCase();
+        }
+
+        const data = await getPersonalisedListings(params);
         setListings(data.listings);
         setFeedMessage(data.feedMessage);
       } catch (err) {
         console.error('Failed to fetch listings:', err);
-        // If profile is incomplete, API returns 400
         if (err.response?.status === 400) {
           navigate('/onboarding');
         }
@@ -33,8 +46,12 @@ const Home = () => {
       }
     };
 
-    fetchListings();
-  }, [navigate]);
+    const timer = setTimeout(() => {
+      fetchListings();
+    }, 500); // Debounce search
+
+    return () => clearTimeout(timer);
+  }, [navigate, activeCategory, searchLocality]);
 
   const handleChat = async (listingId) => {
     try {
@@ -45,7 +62,7 @@ const Home = () => {
     }
   };
 
-  const categories = ['All', 'Rooms', 'PGs', 'Full Flats', 'Studio'];
+  const categories = ['All', 'Rooms', 'PGs', 'Full Flats'];
 
   return (
     <div className="min-h-screen bg-brand-background pb-32">
@@ -58,9 +75,17 @@ const Home = () => {
           <h1 className="text-xl font-bold text-brand-primary tracking-tighter uppercase">NestNagar</h1>
         </div>
         <div className="flex items-center gap-4">
-          <button className="relative p-2 text-text-secondary hover:bg-white rounded-full transition-all">
+          <button 
+            onClick={() => {
+              setUnread(false);
+              navigate('/chat');
+            }}
+            className="relative p-2 text-text-secondary hover:bg-white rounded-full transition-all"
+          >
             <Bell size={22} />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-brand-cta rounded-full border-2 border-brand-background"></span>
+            {unread && (
+              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-brand-cta rounded-full border-2 border-brand-background animate-pulse"></span>
+            )}
           </button>
           <div className="w-10 h-10 rounded-full bg-brand-accent/20 border-2 border-brand-accent overflow-hidden">
             <img src={user?.profilePhoto || `https://ui-avatars.com/api/?name=${user?.name}`} alt="profile" />
@@ -75,7 +100,7 @@ const Home = () => {
             Find your next <br />
             <span className="text-brand-secondary italic">sanctuary.</span>
           </h2>
-          {feedMessage && (
+          {feedMessage && !searchLocality && activeCategory === 'All' && (
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-brand-secondary/10 text-brand-secondary rounded-full text-xs font-bold uppercase tracking-widest">
               <Sparkles size={14} />
               {feedMessage}
@@ -92,6 +117,8 @@ const Home = () => {
                 className="input-field pl-12 h-14 bg-white border-none shadow-sm group-focus-within:shadow-md transition-all"
                 placeholder="Search by locality..."
                 type="text"
+                value={searchLocality}
+                onChange={(e) => setSearchLocality(e.target.value)}
               />
             </div>
             <button className="p-4 bg-brand-primary text-white rounded-2xl shadow-lg active:scale-95 transition-transform">

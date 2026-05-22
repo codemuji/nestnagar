@@ -1,29 +1,28 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ArrowLeft, 
   ArrowRight, 
   Home, 
   Building2, 
-  User, 
   IndianRupee, 
   MapPin, 
-  Wifi, 
-  Wind, 
-  Utensils, 
-  Car,
-  Image as ImageIcon,
   X,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  Image as ImageIcon
 } from 'lucide-react';
 import Button from '../../../components/Button';
 import Input from '../../../components/Input';
-import { createListing } from '../../listings/services/listingService';
+import { getListingById, updateListing } from '../../listings/services/listingService';
 
-const PostListing = () => {
+const EditListing = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [existingPhotos, setExistingPhotos] = useState([]);
   const [photos, setPhotos] = useState([]);
   const [formData, setFormData] = useState({
     type: 'pg',
@@ -37,8 +36,37 @@ const PostListing = () => {
     genderAllowed: 'any',
   });
 
-  const navigate = useNavigate();
   const totalSteps = 7;
+
+  useEffect(() => {
+    const fetchListing = async () => {
+      try {
+        const data = await getListingById(id);
+        setFormData({
+          type: data.type || 'pg',
+          title: data.title || '',
+          description: data.description || '',
+          price: data.price || '',
+          deposit: data.deposit || '',
+          locality: data.locality || '',
+          coordinates: {
+            lat: data.coordinates?.lat || '',
+            lng: data.coordinates?.lng || ''
+          },
+          amenities: data.amenities || [],
+          genderAllowed: data.genderAllowed || 'any',
+        });
+        setExistingPhotos(data.photos || []);
+      } catch (err) {
+        console.error('Failed to fetch sanctuary details:', err);
+        alert('Could not load listing details.');
+        navigate('/dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchListing();
+  }, [id, navigate]);
 
   const nextStep = () => setStep((s) => Math.min(s + 1, totalSteps));
   const prevStep = () => setStep((s) => Math.max(s - 1, 1));
@@ -57,32 +85,45 @@ const PostListing = () => {
     setPhotos((prev) => [...prev, ...files]);
   };
 
-  const removePhoto = (index) => {
+  const removeNewPhoto = (index) => {
     setPhotos(photos.filter((_, i) => i !== index));
   };
 
+  const removeExistingPhoto = (index) => {
+    setExistingPhotos(existingPhotos.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async () => {
-    setLoading(true);
+    setSaving(true);
     try {
       const data = new FormData();
+      
+      // Append normal text fields
       Object.keys(formData).forEach(key => {
         if (key === 'amenities') {
+          data.append(key, JSON.stringify(formData[key]));
+        } else if (key === 'coordinates') {
           data.append(key, JSON.stringify(formData[key]));
         } else {
           data.append(key, formData[key]);
         }
       });
+
+      // Append existing photos list
+      data.append('existingPhotos', JSON.stringify(existingPhotos));
+
+      // Append new files
       photos.forEach(photo => {
         data.append('photos', photo);
       });
 
-      await createListing(data);
+      await updateListing(id, data);
       navigate('/dashboard');
     } catch (err) {
-      console.error('Failed to post sanctuary:', err);
-      alert('Failed to post sanctuary. Please try again.');
+      console.error('Failed to update sanctuary:', err);
+      alert('Failed to update sanctuary. Please try again.');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -256,28 +297,54 @@ const PostListing = () => {
       case 6:
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-            <h3 className="text-2xl font-headings font-bold text-center">Upload Photos</h3>
-            <div className="grid grid-cols-3 gap-2">
-              {photos.map((photo, idx) => (
-                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-border-default">
-                  <img src={URL.createObjectURL(photo)} alt="upload" className="w-full h-full object-cover" />
-                  <button 
-                    onClick={() => removePhoto(idx)}
-                    className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full"
-                  >
-                    <X size={12} />
-                  </button>
+            <h3 className="text-2xl font-headings font-bold text-center">Manage Photos</h3>
+            
+            {/* Existing Photos */}
+            {existingPhotos.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-text-secondary uppercase tracking-widest">Existing Photos ({existingPhotos.length})</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {existingPhotos.map((photoUrl, idx) => (
+                    <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-border-default">
+                      <img src={photoUrl} alt="existing" className="w-full h-full object-cover" />
+                      <button 
+                        onClick={() => removeExistingPhoto(idx)}
+                        className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full hover:bg-black/75 transition-all"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-              {photos.length < 8 && (
-                <label className="aspect-square rounded-xl border-2 border-dashed border-border-default flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-white transition-all text-text-muted">
-                  <ImageIcon size={24} />
-                  <span className="text-[10px] font-bold uppercase">Add Photo</span>
-                  <input type="file" multiple className="hidden" onChange={handleFileChange} accept="image/*" />
-                </label>
-              )}
+              </div>
+            )}
+
+            {/* New Photos */}
+            <div className="space-y-2 pt-2">
+              <p className="text-xs font-bold text-text-secondary uppercase tracking-widest">Upload New Photos ({photos.length})</p>
+              <div className="grid grid-cols-4 gap-2">
+                {photos.map((photo, idx) => (
+                  <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-border-default">
+                    <img src={URL.createObjectURL(photo)} alt="upload" className="w-full h-full object-cover" />
+                    <button 
+                      onClick={() => removeNewPhoto(idx)}
+                      className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full hover:bg-black/75 transition-all"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+                {(existingPhotos.length + photos.length) < 8 && (
+                  <label className="aspect-square rounded-xl border-2 border-dashed border-border-default flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-white transition-all text-text-muted">
+                    <ImageIcon size={20} />
+                    <span className="text-[9px] font-bold uppercase">Add Photo</span>
+                    <input type="file" multiple className="hidden" onChange={handleFileChange} accept="image/*" />
+                  </label>
+                )}
+              </div>
             </div>
-            <p className="text-center text-[10px] text-text-muted italic">Add up to 8 photos. High quality images get 3x more inquiries.</p>
+            
+            <p className="text-center text-[10px] text-text-muted italic pt-2">Total limit is 8 photos. High quality images get 3x more inquiries.</p>
           </div>
         );
       case 7:
@@ -312,6 +379,15 @@ const PostListing = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-brand-background flex flex-col items-center justify-center p-6">
+        <Loader2 className="animate-spin text-brand-secondary mb-4" size={48} />
+        <p className="font-headings font-medium italic text-text-muted">Fetching sanctuary details...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-brand-background flex flex-col items-center justify-center p-6">
       <div className="max-w-xl w-full space-y-8">
@@ -320,7 +396,7 @@ const PostListing = () => {
             <ArrowLeft size={24} />
           </button>
           <div>
-            <h2 className="text-xl font-headings font-bold text-brand-primary">Post Sanctuary</h2>
+            <h2 className="text-xl font-headings font-bold text-brand-primary">Edit Sanctuary</h2>
             <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Step {step} of {totalSteps}</p>
           </div>
         </header>
@@ -347,8 +423,8 @@ const PostListing = () => {
                 Next <ArrowRight size={20} />
               </Button>
             ) : (
-              <Button onClick={handleSubmit} loading={loading} className="px-10 btn-cta">
-                Submit Sanctuary
+              <Button onClick={handleSubmit} loading={saving} className="px-10 btn-cta">
+                Save Changes
               </Button>
             )}
           </div>
@@ -358,4 +434,4 @@ const PostListing = () => {
   );
 };
 
-export default PostListing;
+export default EditListing;

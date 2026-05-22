@@ -32,9 +32,16 @@ const ConversationItem = ({ conversation, onClick }) => {
           <h3 className="font-bold text-brand-primary truncate">{otherParticipant?.name}</h3>
           <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">{time}</span>
         </div>
-        <p className="text-sm text-text-secondary truncate mt-0.5">
-          {lastMsg?.senderId === user.id ? 'You: ' : ''}{lastMsg?.text || 'No messages yet'}
-        </p>
+        <div className="flex justify-between items-center mt-0.5">
+          <p className="text-sm text-text-secondary truncate pr-2">
+            {(lastMsg?.senderId === user.id || lastMsg?.senderId === user._id) ? 'You: ' : ''}{lastMsg?.text || 'No messages yet'}
+          </p>
+          {conversation.unreadCount > 0 && (
+            <span className="flex h-5 min-w-[20px] px-1.5 items-center justify-center rounded-full bg-brand-secondary text-white text-[10px] font-extrabold animate-pulse shrink-0">
+              {conversation.unreadCount}
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-2 mt-1.5">
           <span className="text-[10px] bg-brand-background px-2 py-0.5 rounded-full text-brand-secondary font-bold uppercase border border-border-default/50">
             {conversation.contextType === 'listing' ? 'Property Lead' : 'Partner Request'}

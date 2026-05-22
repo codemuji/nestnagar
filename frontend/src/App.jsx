@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { initSocket } from './features/chat/socket';
 import Login from './features/auth/pages/Login';
 import Register from './features/auth/pages/Register';
 import Onboarding from './features/onboarding/pages/Onboarding';
@@ -9,7 +11,10 @@ import ChatInbox from './features/chat/pages/ChatInbox';
 import ChatRoom from './features/chat/pages/ChatRoom';
 import Dashboard from './features/dashboard/pages/Dashboard';
 import PostListing from './features/dashboard/pages/PostListing';
+import EditListing from './features/dashboard/pages/EditListing';
 import Profile from './features/profile/pages/Profile';
+import PartnersFeed from './features/partners/pages/PartnersFeed';
+import CreatePartnerCard from './features/partners/pages/CreatePartnerCard';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -26,7 +31,26 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 };
 
 function App() {
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { isAuthenticated, user, token } = useSelector((state) => state.auth);
+  const [unreadNotifications, setUnreadNotifications] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      const socket = initSocket(token);
+      
+      const handleNotification = (data) => {
+        if (data.type === 'new-message') {
+          setUnreadNotifications(true);
+        }
+      };
+
+      socket.on('notification', handleNotification);
+
+      return () => {
+        socket.off('notification', handleNotification);
+      };
+    }
+  }, [isAuthenticated, token]);
 
   return (
     <Router>
@@ -42,9 +66,9 @@ function App() {
             <ProtectedRoute>
               {user?.role === 'seeker' ? (
                 // Redirect to onboarding if seekerProfile is missing or locality is empty (indicating it's just defaults)
-                (!user.seekerProfile || !user.seekerProfile.locality) ? <Navigate to="/onboarding" /> : <Home />
+                (!user.seekerProfile || !user.seekerProfile.locality) ? <Navigate to="/onboarding" /> : <Home unread={unreadNotifications} setUnread={setUnreadNotifications} />
               ) : (
-                <Dashboard />
+                <Dashboard unread={unreadNotifications} setUnread={setUnreadNotifications} />
               )}
             </ProtectedRoute>
           } 
@@ -67,12 +91,30 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        
+        <Route 
+          path="/partners" 
+          element={
+            <ProtectedRoute allowedRoles={['seeker']}>
+              <PartnersFeed />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/partners/create" 
+          element={
+            <ProtectedRoute allowedRoles={['seeker']}>
+              <CreatePartnerCard />
+            </ProtectedRoute>
+          } 
+        />
 
         <Route 
           path="/chat" 
           element={
             <ProtectedRoute>
-              <ChatInbox />
+              <ChatInbox unread={unreadNotifications} setUnread={setUnreadNotifications} />
             </ProtectedRoute>
           } 
         />
@@ -90,7 +132,7 @@ function App() {
           path="/dashboard" 
           element={
             <ProtectedRoute allowedRoles={['broker', 'owner']}>
-              <Dashboard />
+              <Dashboard unread={unreadNotifications} setUnread={setUnreadNotifications} />
             </ProtectedRoute>
           } 
         />
@@ -100,6 +142,15 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['broker', 'owner']}>
               <PostListing />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/listings/:id/edit" 
+          element={
+            <ProtectedRoute allowedRoles={['broker', 'owner']}>
+              <EditListing />
             </ProtectedRoute>
           } 
         />

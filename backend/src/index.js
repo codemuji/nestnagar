@@ -12,6 +12,9 @@ import { initSocket } from "./sockets/index.js";
 import authRoutes from "./routes/Auth.routes.js";
 import listingRoutes from "./routes/Listing.routes.js";
 import chatRoutes from "./routes/Chat.routes.js";
+import partnerRoutes from "./routes/Partner.routes.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+import { chatLimiter } from "./middleware/rateLimiter.js";
 
 dotenv.config();
 
@@ -38,11 +41,15 @@ app.use(morgan("dev"));
 // Routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/listings", listingRoutes);
-app.use("/api/v1/chat", chatRoutes);
+app.use("/api/v1/chat", chatLimiter, chatRoutes);
+app.use("/api/v1/partners", partnerRoutes);
 
 app.get("/", (req, res) => {
   res.send("NestNagar API is running...");
 });
+
+// Centralized error handler (must be last)
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 

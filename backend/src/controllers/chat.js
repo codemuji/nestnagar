@@ -1,6 +1,8 @@
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 import Listing from "../models/Listing.js";
+import PartnerCard from "../models/PartnerCard.js";
+import mongoose from "mongoose";
 
 // POST /conversations
 // Starts a conversation or returns existing one
@@ -14,9 +16,12 @@ export const startConversation = async (req, res) => {
       const listing = await Listing.findById(contextId);
       if (!listing) return res.status(404).json({ message: "Listing not found" });
       recipientId = listing.postedBy;
+    } else if (contextType === "partnerCard") {
+      const partnerCard = await PartnerCard.findById(contextId);
+      if (!partnerCard) return res.status(404).json({ message: "Partner card not found" });
+      recipientId = partnerCard.postedBy;
     } else {
-      // Logic for PartnerCard can go here later
-      return res.status(400).json({ message: "Only listing context supported for now" });
+      return res.status(400).json({ message: "Invalid context type" });
     }
 
     if (req.user.id === recipientId.toString()) {
@@ -71,7 +76,28 @@ export const getConversations = async (req, res) => {
     .populate("participants", "name profilePhoto role")
     .sort({ updatedAt: -1 });
 
-    res.status(200).json(conversations);
+    // Manually populate contextId based on contextType
+    const populatedConversations = await Promise.all(
+      conversations.map(async (conv) => {
+        const convObj = conv.toObject();
+        if (conv.contextType === "listing") {
+          convObj.contextId = await mongoose.model("Listing").findById(conv.contextId).select("title price locality photos");
+        } else if (conv.contextType === "partnerCard") {
+          convObj.contextId = await mongoose.model("PartnerCard").findById(conv.contextId).select("preferredLocality budget purpose");
+        }
+        
+        // Count unread messages
+        convObj.unreadCount = await Message.countDocuments({
+          conversationId: conv._id,
+          senderId: { $ne: req.user.id },
+          readBy: { $ne: req.user.id }
+        });
+
+        return convObj;
+      })
+    );
+
+    res.status(200).json(populatedConversations);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

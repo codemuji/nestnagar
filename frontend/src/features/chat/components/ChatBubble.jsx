@@ -1,6 +1,6 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { CheckCheck } from 'lucide-react';
+import { Check, CheckCheck } from 'lucide-react';
 
 const ChatBubble = ({ message, isMe }) => {
   const time = format(new Date(message.createdAt), 'p');
@@ -18,7 +18,13 @@ const ChatBubble = ({ message, isMe }) => {
       </div>
       <div className={`flex items-center gap-1.5 px-2 ${isMe ? 'flex-row-reverse' : ''}`}>
         <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">{time}</span>
-        {isMe && <CheckCheck size={12} className="text-brand-secondary" />}
+        {isMe && (
+          message.readBy && message.readBy.length > 0 ? (
+            <CheckCheck size={12} className="text-brand-secondary" />
+          ) : (
+            <Check size={12} className="text-text-muted" />
+          )
+        )}
       </div>
     </div>
   );

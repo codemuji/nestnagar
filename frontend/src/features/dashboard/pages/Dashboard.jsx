@@ -12,10 +12,11 @@ import {
   Trash2,
   Edit2,
   CheckCircle2,
-  Clock
+  Clock,
+  Bell
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
-import { getMyListings, deleteListing } from '../../listings/services/listingService';
+import { getMyListings, deleteListing, getDashboardStats } from '../../listings/services/listingService';
 import Button from '../../../components/Button';
 import BottomNav from '../../../components/BottomNav';
 
@@ -31,22 +32,27 @@ const StatCard = ({ label, value, icon: Icon, color }) => (
   </div>
 );
 
-const Dashboard = () => {
+const Dashboard = ({ unread, setUnread }) => {
   const [listings, setListings] = useState([]);
+  const [stats, setStats] = useState({ totalListings: 0, totalViews: 0, activeChats: 0 });
   const [loading, setLoading] = useState(true);
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchListings();
+    fetchData();
   }, []);
 
-  const fetchListings = async () => {
+  const fetchData = async () => {
     try {
-      const data = await getMyListings();
-      setListings(data);
+      const [listingsData, statsData] = await Promise.all([
+        getMyListings(),
+        getDashboardStats()
+      ]);
+      setListings(listingsData);
+      setStats(statsData);
     } catch (err) {
-      console.error('Failed to fetch my listings:', err);
+      console.error('Failed to fetch dashboard data:', err);
     } finally {
       setLoading(false);
     }
@@ -57,13 +63,14 @@ const Dashboard = () => {
       try {
         await deleteListing(id);
         setListings(listings.filter(l => l._id !== id));
+        // Refresh stats after deletion
+        const statsData = await getDashboardStats();
+        setStats(statsData);
       } catch (err) {
         alert('Failed to delete listing');
       }
     }
   };
-
-  const totalViews = listings.reduce((acc, curr) => acc + (curr.views || 0), 0);
 
   return (
     <div className="min-h-screen bg-brand-background pb-32">
@@ -76,6 +83,18 @@ const Dashboard = () => {
           <h1 className="text-xl font-bold text-brand-primary tracking-tighter uppercase">Broker Hub</h1>
         </div>
         <div className="flex items-center gap-4">
+          <button 
+            onClick={() => {
+              setUnread(false);
+              navigate('/chat');
+            }}
+            className="relative p-2 text-text-secondary hover:bg-white rounded-full transition-all"
+          >
+            <Bell size={22} />
+            {unread && (
+              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-brand-cta rounded-full border-2 border-brand-background animate-pulse"></span>
+            )}
+          </button>
           <button className="p-2 text-text-secondary hover:bg-white rounded-full transition-all">
             <Settings size={22} />
           </button>
@@ -106,19 +125,19 @@ const Dashboard = () => {
         <section className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <StatCard 
             label="Total Sanctuaries" 
-            value={listings.length} 
+            value={stats.totalListings} 
             icon={Home} 
             color="bg-brand-primary/10 text-brand-primary"
           />
           <StatCard 
             label="Profile Views" 
-            value={totalViews} 
+            value={stats.totalViews} 
             icon={Eye} 
             color="bg-brand-accent/10 text-brand-accent"
           />
           <StatCard 
             label="Active Chats" 
-            value="12" 
+            value={stats.activeChats} 
             icon={MessageSquare} 
             color="bg-brand-cta/10 text-brand-cta"
           />
@@ -166,7 +185,10 @@ const Dashboard = () => {
                     >
                       <Eye size={18} />
                     </button>
-                    <button className="p-2 text-text-muted hover:bg-brand-background rounded-full transition-all">
+                    <button 
+                      onClick={() => navigate(`/listings/${listing._id}/edit`)}
+                      className="p-2 text-text-muted hover:bg-brand-background rounded-full transition-all"
+                    >
                       <Edit2 size={18} />
                     </button>
                     <button 

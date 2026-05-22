@@ -1,6 +1,29 @@
 import Listing from "../models/Listing.js";
 import User from "../models/User.js";
+import Conversation from "../models/Conversation.js";
 import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
+
+// GET /listings/stats
+export const getDashboardStats = async (req, res) => {
+  try {
+    const listings = await Listing.find({ postedBy: req.user.id });
+    const totalListings = listings.length;
+    const totalViews = listings.reduce((acc, curr) => acc + (curr.views || 0), 0);
+    
+    const activeChats = await Conversation.countDocuments({
+      participants: req.user.id
+    });
+
+    res.status(200).json({
+      totalListings,
+      totalViews,
+      activeChats
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 // POST /listings
 export const createListing = async (req, res) => {
@@ -10,17 +33,31 @@ export const createListing = async (req, res) => {
       locality, coordinates, amenities, genderAllowed 
     } = req.body;
 
-    const photos = [];
-    if (req.files) {
-      for (const file of req.files) {
-        // Cloudinary upload logic would go here
-        // For now, assuming middleware handles upload or we do it here
-        const result = await cloudinary.uploader.upload(file.path, {
-          folder: "nestnagar/listings",
-        });
-        photos.push(result.secure_url);
+    let photos = [];
+    if (req.files && req.files.length > 0) {
+      try {
+        const uploadPromises = req.files.map(file =>
+          cloudinary.uploader.upload(file.path, {
+            folder: "nestnagar/listings",
+          })
+        );
+        const uploadResults = await Promise.all(uploadPromises);
+        photos = uploadResults.map(result => result.secure_url);
+      } finally {
+        // Cleanup local temp files
+        for (const file of req.files) {
+          try {
+            await fs.promises.unlink(file.path);
+          } catch (unlinkErr) {
+            console.error(`Failed to delete temp file ${file.path}:`, unlinkErr);
+          }
+        }
       }
     }
+
+    const parsedCoordinates = coordinates 
+      ? (typeof coordinates === "string" ? JSON.parse(coordinates) : coordinates) 
+      : undefined;
 
     const newListing = new Listing({
       postedBy: req.user.id,
@@ -28,10 +65,10 @@ export const createListing = async (req, res) => {
       type,
       title,
       description,
-      price,
-      deposit,
+      price: Number(price),
+      deposit: Number(deposit),
       locality,
-      coordinates,
+      coordinates: parsedCoordinates,
       amenities: typeof amenities === "string" ? JSON.parse(amenities) : amenities,
       genderAllowed,
       photos,
@@ -52,9 +89,10 @@ export const getListings = async (req, res) => {
     let query = {};
     
     if (my === 'true') {
-      // If fetching own listings, we don't filter by status available only
-      // But we need the user ID from the protect middleware
-      // Wait, is getListings protected? Let's check routes.
+      // If fetching own listings, we need the user ID from the protect middleware
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authorized to view your listings" });
+      }
       query.postedBy = req.user.id;
     } else {
       query.status = "available";
@@ -120,29 +158,33 @@ export const getPersonalisedListings = async (req, res) => {
       return res.status(400).json({ message: "Personalised feed only available for seekers with a profile" });
     }
 
+    const { type, locality, minPrice, maxPrice } = req.query;
+    const profile = user.seekerProfile;
+
     const { 
       listingTypes, budget, priorityLocalities, 
       locality: mainLocality, genderPreference 
-    } = user.seekerProfile;
+    } = profile;
 
     // Fetch ALL available listings (not just matches)
     const allListings = await Listing.find({ status: "available" })
       .populate("postedBy", "name profilePhoto");
 
-    // Score and sort listings based on user profile
+    // Score and sort listings based on user profile AND overrides
     const scoredListings = allListings.map(listing => {
       let score = 0;
 
       // 1. Property Type Match
-      if (listingTypes && listingTypes.length > 0) {
-        if (listingTypes.includes(listing.type)) {
+      const searchTypes = type ? [type] : listingTypes;
+      if (searchTypes && searchTypes.length > 0) {
+        if (searchTypes.includes(listing.type)) {
           score += 20;
         }
       }
 
       // 2. Location Match
-      // Check main locality preference
-      if (mainLocality && listing.locality.toLowerCase().includes(mainLocality.toLowerCase())) {
+      const searchLocality = locality || mainLocality;
+      if (searchLocality && listing.locality.toLowerCase().includes(searchLocality.toLowerCase())) {
         score += 40;
       }
       
@@ -157,16 +199,17 @@ export const getPersonalisedListings = async (req, res) => {
       }
 
       // 3. Budget Match
-      if (listing.price >= budget.min && listing.price <= budget.max) {
+      const searchMax = maxPrice ? Number(maxPrice) : budget.max;
+      const searchMin = minPrice ? Number(minPrice) : budget.min;
+
+      if (listing.price >= searchMin && listing.price <= searchMax) {
         score += 30;
-      } else if (listing.price <= budget.max * 1.3) {
+      } else if (listing.price <= searchMax * 1.3) {
         // Within 30% of max budget
         score += 10;
       }
 
       // 4. Gender Preference Match
-      // seeker want 'female' and listing is 'female' or 'any'
-      // listing is 'any' is always a plus for gender matching
       const seekerWant = genderPreference || "any";
       const listingAllow = listing.genderAllowed;
 
@@ -180,8 +223,17 @@ export const getPersonalisedListings = async (req, res) => {
       };
     });
 
+    // If explicit filters are used, we might want to boost exact matches more or filter strictly
+    // For now, keeping the scoring approach but could filter if locality/type is provided
+    let finalResult = scoredListings;
+    
+    if (type || locality) {
+       // Optional: Filter more strictly if user explicitly searched?
+       // Let's keep it as scoring for a "personalised search" feel
+    }
+
     // Sort by match score (descending), then by most recent (descending)
-    const sortedListings = scoredListings.sort((a, b) => {
+    const sortedListings = finalResult.sort((a, b) => {
       if (b.matchScore !== a.matchScore) {
         return b.matchScore - a.matchScore;
       }
@@ -189,7 +241,7 @@ export const getPersonalisedListings = async (req, res) => {
     });
 
     res.status(200).json({
-      feedMessage: user.seekerProfile.feedMessage || "Here are some listings we found for you.",
+      feedMessage: profile.feedMessage || "Here are some listings we found for you.",
       listings: sortedListings
     });
   } catch (error) {
@@ -211,13 +263,62 @@ export const updateListing = async (req, res) => {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    const updatedListing = await Listing.findByIdAndUpdate(
-      req.params.id,
-      { $set: req.body },
-      { new: true }
-    );
+    const { 
+      type, title, description, price, deposit, 
+      locality, coordinates, amenities, genderAllowed, status, existingPhotos
+    } = req.body;
 
-    res.status(200).json(updatedListing);
+    let currentPhotos = [];
+    if (existingPhotos) {
+      currentPhotos = typeof existingPhotos === "string" ? JSON.parse(existingPhotos) : existingPhotos;
+    } else {
+      currentPhotos = listing.photos || [];
+    }
+
+    let newPhotos = [];
+    if (req.files && req.files.length > 0) {
+      try {
+        const uploadPromises = req.files.map(file =>
+          cloudinary.uploader.upload(file.path, {
+            folder: "nestnagar/listings",
+          })
+        );
+        const uploadResults = await Promise.all(uploadPromises);
+        newPhotos = uploadResults.map(result => result.secure_url);
+      } finally {
+        // Cleanup local temp files
+        for (const file of req.files) {
+          try {
+            await fs.promises.unlink(file.path);
+          } catch (unlinkErr) {
+            console.error(`Failed to delete temp file ${file.path}:`, unlinkErr);
+          }
+        }
+      }
+    }
+
+    const mergedPhotos = [...currentPhotos, ...newPhotos];
+
+    if (type !== undefined) listing.type = type;
+    if (title !== undefined) listing.title = title;
+    if (description !== undefined) listing.description = description;
+    if (price !== undefined) listing.price = Number(price);
+    if (deposit !== undefined) listing.deposit = Number(deposit);
+    if (locality !== undefined) listing.locality = locality;
+    if (genderAllowed !== undefined) listing.genderAllowed = genderAllowed;
+    if (status !== undefined) listing.status = status;
+
+    if (coordinates !== undefined) {
+      listing.coordinates = typeof coordinates === "string" ? JSON.parse(coordinates) : coordinates;
+    }
+    if (amenities !== undefined) {
+      listing.amenities = typeof amenities === "string" ? JSON.parse(amenities) : amenities;
+    }
+    
+    listing.photos = mergedPhotos;
+
+    await listing.save();
+    res.status(200).json(listing);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

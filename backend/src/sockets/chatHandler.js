@@ -49,6 +49,22 @@ const chatHandler = (io, socket) => {
   socket.on("stop-typing", ({ conversationId }) => {
     socket.to(conversationId).emit("user-stop-typing", { conversationId, userId });
   });
+
+  socket.on("read-conversation", async ({ conversationId }) => {
+    try {
+      const conversation = await Conversation.findById(conversationId);
+      if (!conversation || !conversation.participants.includes(userId)) return;
+
+      await Message.updateMany(
+        { conversationId, senderId: { $ne: userId } },
+        { $addToSet: { readBy: userId } }
+      );
+
+      io.to(conversationId).emit("conversation-read", { conversationId, userId });
+    } catch (err) {
+      console.error("Socket error in read-conversation:", err);
+    }
+  });
 };
 
 export default chatHandler;

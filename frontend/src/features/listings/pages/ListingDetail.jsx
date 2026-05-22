@@ -201,23 +201,26 @@ const ListingDetail = () => {
           {/* Location Map Preview */}
           <div className="space-y-4 pt-4">
             <h3 className="text-sm font-bold text-brand-primary uppercase tracking-[0.2em]">Location</h3>
-            <div className="relative w-full h-56 rounded-[2rem] overflow-hidden shadow-card group cursor-pointer border border-border-light/50">
-              <img 
-                src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=2066&auto=format&fit=crop" 
-                alt="map" 
-                className="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-brand-secondary/5"></div>
-              <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-md p-4 rounded-2xl flex justify-between items-center shadow-lg">
-                <div className="flex gap-3 items-center">
-                  <div className="p-2 bg-brand-secondary text-white rounded-lg">
-                    <MapPin size={18} />
-                  </div>
-                  <span className="text-xs font-bold text-brand-primary">View on interactive map</span>
-                </div>
-                <ChevronRight size={20} className="text-text-muted" />
-              </div>
+            <div className="w-full h-64 rounded-[2rem] overflow-hidden shadow-card border border-border-light/50 relative">
+              <iframe
+                title="Sanctuary Location Map"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                loading="lazy"
+                allowFullScreen
+                src={
+                  listing.coordinates && listing.coordinates.lat && listing.coordinates.lng
+                    ? `https://maps.google.com/maps?q=${listing.coordinates.lat},${listing.coordinates.lng}&z=15&output=embed`
+                    : `https://maps.google.com/maps?q=${encodeURIComponent(listing.locality + ', Itanagar, Arunachal Pradesh')}&z=15&output=embed`
+                }
+              ></iframe>
             </div>
+            {listing.coordinates && listing.coordinates.lat && listing.coordinates.lng && (
+              <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider text-center">
+                Coordinates: {Number(listing.coordinates.lat).toFixed(4)}, {Number(listing.coordinates.lng).toFixed(4)}
+              </p>
+            )}
           </div>
         </section>
       </main>

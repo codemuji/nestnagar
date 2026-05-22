@@ -11,9 +11,10 @@ import {
   Video,
   Loader2,
   MapPin,
-  Calendar
+  Calendar,
+  Users
 } from 'lucide-react';
-import { getMessages, getConversations } from '../services/chatService';
+import { getMessages, getConversations, markRead } from '../services/chatService';
 import { initSocket, getSocket } from '../socket';
 import ChatBubble from '../components/ChatBubble';
 
@@ -41,6 +42,9 @@ const ChatRoom = () => {
         const currentConv = convs.find(c => c._id === id);
         setConversation(currentConv);
         setMessages(msgs);
+        
+        // Mark as read in DB
+        await markRead(id);
       } catch (err) {
         console.error('Failed to load chat:', err);
       } finally {
@@ -53,20 +57,43 @@ const ChatRoom = () => {
     // 2. Initialize Socket
     socketRef.current = initSocket(token);
     socketRef.current.emit('join-conversation', id);
+    socketRef.current.emit('read-conversation', { conversationId: id });
 
     // 3. Listen for new messages
     socketRef.current.on('new-message', (message) => {
       if (message.conversationId === id) {
         setMessages((prev) => [...prev, message]);
+        
+        // If incoming message, mark read
+        const myId = user?.id || user?._id;
+        if (message.senderId !== myId) {
+          markRead(id).catch(console.error);
+          socketRef.current.emit('read-conversation', { conversationId: id });
+        }
+      }
+    });
+
+    // 4. Listen for read notifications
+    socketRef.current.on('conversation-read', ({ conversationId, userId }) => {
+      if (conversationId === id) {
+        setMessages((prev) =>
+          prev.map((msg) => {
+            if (msg.senderId !== userId && !msg.readBy.includes(userId)) {
+              return { ...msg, readBy: [...msg.readBy, userId] };
+            }
+            return msg;
+          })
+        );
       }
     });
 
     return () => {
       if (socketRef.current) {
         socketRef.current.off('new-message');
+        socketRef.current.off('conversation-read');
       }
     };
-  }, [id, token]);
+  }, [id, token, user]);
 
   useEffect(() => {
     // Auto-scroll to bottom
@@ -134,14 +161,53 @@ const ChatRoom = () => {
         {conversation?.contextType === 'listing' && (
           <div className="flex gap-4 bg-white p-4 rounded-3xl border border-border-light shadow-card animate-in fade-in zoom-in-95 duration-500">
             <div className="w-20 h-20 bg-brand-background rounded-2xl overflow-hidden shrink-0 border border-border-light/50">
-              <img src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=200" alt="listing" className="w-full h-full object-cover" />
+              <img 
+                src={conversation?.contextId?.photos?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=200"} 
+                alt="listing" 
+                className="w-full h-full object-cover" 
+              />
             </div>
             <div className="flex flex-col justify-center space-y-1">
-              <span className="text-[9px] font-bold text-brand-cta uppercase tracking-[0.2em]">Context Listing</span>
-              <h3 className="font-bold text-brand-primary text-sm line-clamp-1">Inquiry for Property</h3>
+              <span className="text-[9px] font-bold text-brand-cta uppercase tracking-[0.2em]">Property Lead</span>
+              <h3 className="font-bold text-brand-primary text-sm line-clamp-1">
+                {conversation?.contextId?.title || "Inquiry for Property"}
+              </h3>
               <div className="flex items-center gap-3 text-[10px] text-text-secondary font-medium">
-                <span className="flex items-center gap-1"><MapPin size={10} /> Itanagar</span>
-                <span className="flex items-center gap-1 text-brand-secondary"><Calendar size={10} /> Move-in Request</span>
+                <span className="flex items-center gap-1">
+                  <MapPin size={10} /> 
+                  {conversation?.contextId?.locality || "Itanagar"}
+                </span>
+                {conversation?.contextId?.price && (
+                  <span className="flex items-center gap-1 text-brand-secondary">
+                    ₹{new Intl.NumberFormat('en-IN').format(conversation.contextId.price)}/mo
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Partner Card Context (Mini) */}
+        {conversation?.contextType === 'partnerCard' && (
+          <div className="flex gap-4 bg-white p-4 rounded-3xl border border-border-light shadow-card animate-in fade-in zoom-in-95 duration-500">
+            <div className="w-20 h-20 bg-brand-background rounded-2xl overflow-hidden shrink-0 border border-border-light/50 flex items-center justify-center text-brand-secondary">
+              <Users size={32} />
+            </div>
+            <div className="flex flex-col justify-center space-y-1">
+              <span className="text-[9px] font-bold text-brand-secondary uppercase tracking-[0.2em]">Partner Request</span>
+              <h3 className="font-bold text-brand-primary text-sm line-clamp-1">
+                Looking for Roommate ({conversation?.contextId?.purpose === 'student' ? 'Student' : 'Professional'})
+              </h3>
+              <div className="flex items-center gap-3 text-[10px] text-text-secondary font-medium">
+                <span className="flex items-center gap-1">
+                  <MapPin size={10} /> 
+                  {conversation?.contextId?.preferredLocality || "Itanagar"}
+                </span>
+                {conversation?.contextId?.budget && (
+                  <span className="flex items-center gap-1 text-brand-cta">
+                    Max: ₹{new Intl.NumberFormat('en-IN').format(conversation.contextId.budget)}/mo
+                  </span>
+                )}
               </div>
             </div>
           </div>

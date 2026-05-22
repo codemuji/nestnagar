@@ -1,7 +1,7 @@
 import API from '../../../services/api';
 
-export const getPersonalisedListings = async () => {
-  const response = await API.get('/listings/personalised');
+export const getPersonalisedListings = async (params = {}) => {
+  const response = await API.get('/listings/personalised', { params });
   return response.data;
 };
 
@@ -20,8 +20,20 @@ export const getMyListings = async () => {
   return response.data;
 };
 
+export const getDashboardStats = async () => {
+  const response = await API.get('/listings/stats');
+  return response.data;
+};
+
 export const createListing = async (formData) => {
   const response = await API.post('/listings', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
+export const updateListing = async (id, formData) => {
+  const response = await API.patch(`/listings/${id}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return response.data;

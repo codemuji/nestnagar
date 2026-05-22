@@ -52,10 +52,11 @@ const Profile = () => {
     if (window.confirm('Are you sure you want to log out of your sanctuary?')) {
       try {
         await logoutUser();
+      } catch (err) {
+        console.error('Logout API call failed:', err);
+      } finally {
         dispatch(logout());
         navigate('/login');
-      } catch (err) {
-        console.error('Logout failed:', err);
       }
     }
   };

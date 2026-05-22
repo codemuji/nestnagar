@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { Search, Bell, MessageCircle, Loader2 } from 'lucide-react';
 import { getConversations } from '../services/chatService';
 import ConversationItem from '../components/ConversationItem';
 import BottomNav from '../../../components/BottomNav';
 
-const ChatInbox = () => {
+const ChatInbox = ({ unread, setUnread }) => {
+  const { user } = useSelector((state) => state.auth);
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,6 +19,8 @@ const ChatInbox = () => {
       try {
         const data = await getConversations();
         setConversations(data);
+        // Clear unread notifications when entering inbox
+        if (unread) setUnread(false);
       } catch (err) {
         console.error('Failed to fetch conversations:', err);
       } finally {
@@ -24,13 +29,25 @@ const ChatInbox = () => {
     };
 
     fetchConversations();
-  }, []);
+  }, [unread, setUnread]);
 
   const filteredConversations = conversations.filter((conv) => {
-    // Find the other participant's name
-    const otherParticipant = conv.participants.find(p => p.id !== p._id); // Simple mock check
-    // Actually need a better check but for now filtering is fine
-    return conv.lastMessage?.text?.toLowerCase().includes(searchQuery.toLowerCase());
+    const otherParticipant = conv.participants.find(
+      (p) => p._id !== user?.id && p._id !== user?._id
+    );
+    const matchesSearch = 
+      conv.lastMessage?.text?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      otherParticipant?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (!matchesSearch) return false;
+
+    if (activeFilter === 'unread') {
+      return conv.unreadCount > 0;
+    }
+    if (activeFilter === 'leads') {
+      return conv.contextType === 'listing';
+    }
+    return true;
   });
 
   return (
@@ -67,9 +84,36 @@ const ChatInbox = () => {
 
         {/* Categories Chips */}
         <section className="flex gap-2 mb-6 overflow-x-auto no-scrollbar">
-          <button className="bg-brand-primary text-white px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-md">All Messages</button>
-          <button className="bg-white text-text-muted px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border border-border-default/50 hover:border-brand-secondary transition-all">Unread</button>
-          <button className="bg-white text-text-muted px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border border-border-default/50 hover:border-brand-secondary transition-all">Leads</button>
+          <button 
+            onClick={() => setActiveFilter('all')}
+            className={`px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
+              activeFilter === 'all' 
+                ? 'bg-brand-primary text-white shadow-md' 
+                : 'bg-white text-text-muted border border-border-default/50 hover:border-brand-secondary'
+            }`}
+          >
+            All Messages
+          </button>
+          <button 
+            onClick={() => setActiveFilter('unread')}
+            className={`px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
+              activeFilter === 'unread' 
+                ? 'bg-brand-primary text-white shadow-md' 
+                : 'bg-white text-text-muted border border-border-default/50 hover:border-brand-secondary'
+            }`}
+          >
+            Unread
+          </button>
+          <button 
+            onClick={() => setActiveFilter('leads')}
+            className={`px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
+              activeFilter === 'leads' 
+                ? 'bg-brand-primary text-white shadow-md' 
+                : 'bg-white text-text-muted border border-border-default/50 hover:border-brand-secondary'
+            }`}
+          >
+            Leads
+          </button>
         </section>
 
         {/* Conversations List */}

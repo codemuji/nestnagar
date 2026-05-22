@@ -14,3 +14,8 @@ export const getMessages = async (conversationId) => {
   const response = await API.get(`/chat/${conversationId}/messages`);
   return response.data;
 };
+
+export const markRead = async (conversationId) => {
+  const response = await API.patch(`/chat/${conversationId}/read`);
+  return response.data;
+};

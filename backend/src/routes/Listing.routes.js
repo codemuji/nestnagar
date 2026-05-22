@@ -6,7 +6,8 @@ import {
   updateListing, 
   deleteListing,
   getPersonalisedListings,
-  getMyListings
+  getMyListings,
+  getDashboardStats
 } from "../controllers/listing.js";
 import { protect, authorize } from "../middleware/auth.js";
 import upload from "../middleware/upload.js";
@@ -17,6 +18,7 @@ const router = express.Router();
 router.get("/", getListings);
 router.get("/personalised", protect, authorize("seeker"), getPersonalisedListings);
 router.get("/my", protect, authorize("broker", "owner"), getMyListings);
+router.get("/stats", protect, authorize("broker", "owner"), getDashboardStats);
 router.get("/:id", getListingById);
 
 // Protected routes
