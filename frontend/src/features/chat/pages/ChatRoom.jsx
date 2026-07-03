@@ -98,19 +98,23 @@ const ChatRoom = () => {
     socketRef.current.emit('read-conversation', { conversationId: id });
 
     // 3. Listen for new messages
-    socketRef.current.on('new-message', (message) => {
+    const handleNewMessage = (message) => {
       if (message.conversationId === id) {
         setMessages((prev) => {
-          // Check if optimistic message already exists
-          const exists = prev.some(m => m._id === message._id || m.tempId === message._id);
-          if (exists) {
-            return prev.map(m => 
-              m.tempId === message._id ? { ...message, status: 'sent' } : m
-            );
+          // Reconcile optimistic message using tempId, or skip if real _id already exists
+          if (message.tempId) {
+            const optimistic = prev.find(m => m.tempId === message.tempId);
+            if (optimistic) {
+              return prev.map(m =>
+                m.tempId === message.tempId ? { ...message.toObject ? message.toObject() : message, status: 'sent' } : m
+              );
+            }
           }
-          return [...prev, message];
+          if (prev.some(m => m._id === message._id)) return prev;
+          const normalized = message.toObject ? message.toObject() : message;
+          return [...prev, normalized];
         });
-        
+
         // If incoming message, mark read
         const myId = user?.id || user?._id;
         if (message.senderId !== myId) {
@@ -118,7 +122,8 @@ const ChatRoom = () => {
           socketRef.current.emit('read-conversation', { conversationId: id });
         }
       }
-    });
+    };
+    socketRef.current.on('new-message', handleNewMessage);
 
     // 4. Listen for read notifications
     socketRef.current.on('conversation-read', ({ conversationId, userId }) => {
@@ -167,7 +172,7 @@ const ChatRoom = () => {
 
     return () => {
       if (socketRef.current) {
-        socketRef.current.off('new-message');
+        socketRef.current.off('new-message', handleNewMessage);
         socketRef.current.off('conversation-read');
         socketRef.current.off('user-typing');
         socketRef.current.off('message-reaction');

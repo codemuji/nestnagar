@@ -9,7 +9,7 @@ const chatHandler = (io, socket) => {
     console.log(`User ${userId} joined room: ${conversationId}`);
   });
 
-  socket.on("send-message", async ({ conversationId, text }) => {
+  socket.on("send-message", async ({ conversationId, text, tempId }) => {
     try {
       const conversation = await Conversation.findById(conversationId);
       if (!conversation || !conversation.participants.includes(userId)) return;
@@ -24,8 +24,15 @@ const chatHandler = (io, socket) => {
       conversation.lastMessage = { text, senderId: userId, timestamp: new Date() };
       await conversation.save();
 
-      // Emit to everyone in the room (including sender)
-      io.to(conversationId).emit("new-message", newMessage);
+      const payload = {
+        ...newMessage.toObject(),
+        tempId,
+      };
+
+      // Echo to sender so they can reconcile the optimistic message with the persisted one
+      io.to(socket.id).emit("new-message", payload);
+      // Broadcast to other participants only
+      socket.to(conversationId).emit("new-message", payload);
 
       // Notify other participants even if they aren't in the specific room
       conversation.participants.forEach((participantId) => {
