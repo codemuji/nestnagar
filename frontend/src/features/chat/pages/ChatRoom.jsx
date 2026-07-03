@@ -43,6 +43,7 @@ const ChatRoom = () => {
   
   const scrollRef = useRef();
   const messagesEndRef = useRef();
+  const messagesContainerRef = useRef();
   const socketRef = useRef();
   const typingTimeoutRef = useRef();
   const textareaRef = useRef();
@@ -181,8 +182,11 @@ const ChatRoom = () => {
   }, [id, token, user]);
 
   useEffect(() => {
-    // Auto-scroll to bottom
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Auto-scroll to bottom by targeting the messages container directly.
+    // Avoids scrollIntoView timing race on first paint and gives consistent behavior.
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
   }, [messages]);
 
   // Typing indicator
@@ -320,7 +324,7 @@ const ChatRoom = () => {
       </header>
 
       {/* Messages Area */}
-      <main className="flex-1 pt-24 pb-24 px-6 overflow-y-auto space-y-6 no-scrollbar max-w-4xl mx-auto w-full">
+      <main ref={messagesContainerRef} className="flex-1 pt-24 pb-24 px-6 overflow-y-auto space-y-6 no-scrollbar max-w-4xl mx-auto w-full">
         {/* Listing Context (Mini) */}
         {conversation?.contextType === 'listing' && (
           <div className="flex gap-4 bg-white p-4 rounded-3xl border border-border-light shadow-card animate-in fade-in zoom-in-95 duration-500">
