@@ -1,57 +1,130 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { Search, SlidersHorizontal, Bell, Sparkles, Loader2 } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Search, SlidersHorizontal, Bell, Sparkles, Loader2, MapPin, Plus, Filter, X } from 'lucide-react';
 import ListingCard from '../components/ListingCard';
+import ListingCardSkeleton from '../components/ListingCardSkeleton';
 import BottomNav from '../../../components/BottomNav';
-import { getPersonalisedListings } from '../services/listingService';
+import FilterDrawer from '../components/FilterDrawer';
+import { usePersonalisedListings } from '../../../hooks/useQueries';
 import { startConversation } from '../../chat/services/chatService';
+import { useLocalitySearch } from '../../../hooks/useLocalitySearch';
 
 const Home = ({ unread, setUnread }) => {
-  const [listings, setListings] = useState([]);
-  const [feedMessage, setFeedMessage] = useState('');
-  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
-  const [searchLocality, setSearchLocality] = useState('');
-  
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    price: { min: 0, max: 50000 },
+    types: [],
+    amenities: [],
+    genderAllowed: 'any',
+    verifiedOnly: false,
+  });
+
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  // Search autocomplete hook
+  const {
+    query: searchLocality,
+    setQuery: setSearchLocality,
+    suggestions,
+    recentSearches,
+    loading: suggestionsLoading,
+    showDropdown,
+    setShowDropdown,
+    handleSelect,
+    clearRecent,
+  } = useLocalitySearch();
+
+  const dropdownRef = useRef(null);
+
+  // URL sync - initialize filters from URL on mount
   useEffect(() => {
-    const fetchListings = async () => {
-      setLoading(true);
-      try {
-        const params = {};
-        if (searchLocality) params.locality = searchLocality;
-        if (activeCategory !== 'All') {
-          // Map UI categories to backend types
-          const categoryMap = {
-            'Rooms': 'single-room',
-            'PGs': 'pg',
-            'Full Flats': 'flat'
-          };
-          params.type = categoryMap[activeCategory] || activeCategory.toLowerCase();
-        }
-
-        const data = await getPersonalisedListings(params);
-        setListings(data.listings);
-        setFeedMessage(data.feedMessage);
-      } catch (err) {
-        console.error('Failed to fetch listings:', err);
-        if (err.response?.status === 400) {
-          navigate('/onboarding');
-        }
-      } finally {
-        setLoading(false);
-      }
+    const urlFilters = {
+      price: {
+        min: Number(searchParams.get('minPrice')) || 0,
+        max: Number(searchParams.get('maxPrice')) || 50000,
+      },
+      types: searchParams.get('types')?.split(',').filter(Boolean) || [],
+      amenities: searchParams.get('amenities')?.split(',').filter(Boolean) || [],
+      genderAllowed: searchParams.get('gender') || 'any',
+      verifiedOnly: searchParams.get('verified') === 'true',
     };
+    setFilters(urlFilters);
 
-    const timer = setTimeout(() => {
-      fetchListings();
-    }, 500); // Debounce search
+    // Initialize search locality and category from URL
+    const urlLocality = searchParams.get('locality');
+    if (urlLocality) setSearchLocality(urlLocality);
+    
+    const urlCategory = searchParams.get('category');
+    if (urlCategory && ['All', 'Rooms', 'PGs', 'Full Flats'].includes(urlCategory)) {
+      setActiveCategory(urlCategory);
+    }
+  }, []); // Run once on mount
 
-    return () => clearTimeout(timer);
-  }, [navigate, activeCategory, searchLocality]);
+  // Build query params for React Query
+  const queryParams = React.useMemo(() => {
+    const params = {};
+    if (searchLocality) params.locality = searchLocality;
+    if (activeCategory !== 'All') {
+      const categoryMap = {
+        'Rooms': 'single-room',
+        'PGs': 'pg',
+        'Full Flats': 'flat'
+      };
+      params.type = categoryMap[activeCategory] || activeCategory.toLowerCase();
+    }
+    if (filters.price.min > 0) params.minPrice = filters.price.min;
+    if (filters.price.max < 50000) params.maxPrice = filters.price.max;
+    if (filters.types.length > 0) params.types = filters.types.join(',');
+    if (filters.amenities.length > 0) params.amenities = filters.amenities.join(',');
+    if (filters.genderAllowed !== 'any') params.genderAllowed = filters.genderAllowed;
+    if (filters.verifiedOnly) params.verifiedOnly = 'true';
+    return params;
+  }, [searchLocality, activeCategory, filters]);
+
+  // React Query for listings
+  const { 
+    data: listingsData, 
+    isLoading, 
+    isFetching,
+    error 
+  } = usePersonalisedListings(queryParams);
+
+  const listings = listingsData?.listings || [];
+  const feedMessage = listingsData?.feedMessage || '';
+
+  // Sync filters to URL whenever they change
+  const syncFiltersToUrl = useCallback((newFilters, newLocality, newCategory) => {
+    const params = new URLSearchParams();
+    
+    if (newLocality) params.set('locality', newLocality);
+    if (newCategory && newCategory !== 'All') params.set('category', newCategory);
+    if (newFilters.price.min > 0) params.set('minPrice', newFilters.price.min);
+    if (newFilters.price.max < 50000) params.set('maxPrice', newFilters.price.max);
+    if (newFilters.types.length > 0) params.set('types', newFilters.types.join(','));
+    if (newFilters.amenities.length > 0) params.set('amenities', newFilters.amenities.join(','));
+    if (newFilters.genderAllowed !== 'any') params.set('gender', newFilters.genderAllowed);
+    if (newFilters.verifiedOnly) params.set('verified', 'true');
+
+    setSearchParams(params, { replace: true });
+  }, [setSearchParams]);
+
+  // Update filters and sync to URL
+  const handleFiltersChange = useCallback((newFilters) => {
+    setFilters(prev => {
+      const resolvedFilters = typeof newFilters === 'function' ? newFilters(prev) : newFilters;
+      syncFiltersToUrl(resolvedFilters, searchLocality, activeCategory);
+      return resolvedFilters;
+    });
+  }, [searchLocality, activeCategory, syncFiltersToUrl]);
+
+  // Handle filter drawer apply
+  const handleFiltersApply = useCallback(() => {
+    setFilterDrawerOpen(false);
+  }, []);
 
   const handleChat = async (listingId) => {
     try {
@@ -62,6 +135,17 @@ const Home = ({ unread, setUnread }) => {
     }
   };
 
+  const handleCategoryChange = useCallback((cat) => {
+    setActiveCategory(cat);
+    syncFiltersToUrl(filters, searchLocality, cat);
+  }, [filters, searchLocality, syncFiltersToUrl]);
+
+  const handleSearchSelect = useCallback((locality) => {
+    setSearchLocality(locality);
+    syncFiltersToUrl(filters, locality, activeCategory);
+  }, [filters, activeCategory, syncFiltersToUrl]);
+
+  // Categories and search bindings end above
   const categories = ['All', 'Rooms', 'PGs', 'Full Flats'];
 
   return (
@@ -114,15 +198,96 @@ const Home = ({ unread, setUnread }) => {
             <div className="relative flex-grow group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-brand-secondary transition-colors" size={20} />
               <input 
+                ref={dropdownRef}
                 className="input-field pl-12 h-14 bg-white border-none shadow-sm group-focus-within:shadow-md transition-all"
                 placeholder="Search by locality..."
                 type="text"
                 value={searchLocality}
                 onChange={(e) => setSearchLocality(e.target.value)}
+                onFocus={() => setShowDropdown(true)}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                autoComplete="off"
+                aria-autocomplete="list"
+                aria-controls="locality-suggestions"
+                aria-expanded={showDropdown && (suggestions.length > 0 || recentSearches.length > 0)}
               />
+              
+              {suggestionsLoading && (
+                <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-secondary animate-spin" size={20} />
+              )}
+              
+              {searchLocality && !suggestionsLoading && (
+                <button
+                  onClick={() => setSearchLocality('')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-brand-secondary transition-colors p-1"
+                  aria-label="Clear search"
+                >
+                  <X size={18} />
+                </button>
+              )}
+
+              {/* Autocomplete Dropdown */}
+              {(showDropdown && (suggestions.length > 0 || recentSearches.length > 0)) && (
+                <div
+                  id="locality-suggestions"
+                  className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-border-light/50 overflow-hidden z-50 animate-in fade-in-20 duration-200"
+                  role="listbox"
+                >
+                  {recentSearches.length > 0 && (
+                    <div className="p-3 border-b border-border-light/50">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Recent Searches</span>
+                        {recentSearches.length > 1 && (
+                          <button
+                            onClick={clearRecent}
+                            className="text-[10px] font-bold text-brand-secondary hover:underline"
+                          >
+                            Clear all
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {recentSearches.map((loc) => (
+                          <button
+                            key={loc}
+                            onClick={() => handleSearchSelect(loc)}
+                            className="px-3 py-1.5 bg-brand-background text-text-secondary text-xs font-medium rounded-full hover:bg-brand-secondary/10 hover:text-brand-secondary transition-all"
+                          >
+                            {loc}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {suggestions.length > 0 && (
+                    <div className="p-2 max-h-60 overflow-y-auto">
+                      {suggestions.map((loc) => (
+                        <button
+                          key={loc}
+                          onClick={() => handleSearchSelect(loc)}
+                          className="w-full px-4 py-3 text-left text-text-primary font-medium hover:bg-brand-background transition-colors rounded-xl flex items-center gap-3"
+                          role="option"
+                        >
+                          <MapPin size={18} className="text-brand-secondary flex-shrink-0" />
+                          <span className="truncate">{loc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <button className="p-4 bg-brand-primary text-white rounded-2xl shadow-lg active:scale-95 transition-transform">
+            <button 
+              onClick={() => setFilterDrawerOpen(true)}
+              className="p-4 bg-brand-primary text-white rounded-2xl shadow-lg active:scale-95 transition-transform relative"
+            >
               <SlidersHorizontal size={22} />
+              {(filters.price.min > 0 || filters.price.max < 50000 || filters.types.length > 0 || filters.amenities.length > 0 || filters.genderAllowed !== 'any' || filters.verifiedOnly) && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-brand-cta text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {filters.types.length + filters.amenities.length + (filters.price.min > 0 ? 1 : 0) + (filters.price.max < 50000 ? 1 : 0) + (filters.genderAllowed !== 'any' ? 1 : 0) + (filters.verifiedOnly ? 1 : 0)}
+                </span>
+              )}
             </button>
           </div>
         </section>
@@ -132,7 +297,7 @@ const Home = ({ unread, setUnread }) => {
           {categories.map((cat) => (
             <button
               key={cat}
-              onClick={() => setActiveCategory(cat)}
+              onClick={() => handleCategoryChange(cat)}
               className={`whitespace-nowrap px-6 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest transition-all ${
                 activeCategory === cat 
                   ? 'bg-brand-secondary text-white shadow-md' 
@@ -145,36 +310,69 @@ const Home = ({ unread, setUnread }) => {
         </section>
 
         {/* Listings Feed */}
-        <section className="space-y-8">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-text-muted">
-              <Loader2 className="animate-spin mb-4" size={40} />
-              <p className="font-headings font-medium italic">Curating your feed...</p>
+        <section>
+          {(isLoading || isFetching) && listings.length === 0 ? (
+            <div className="grid grid-cols-2 gap-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <ListingCardSkeleton key={i} compact />
+              ))}
             </div>
           ) : listings.length > 0 ? (
-            listings.map((item) => (
-              <ListingCard key={item._id} listing={item} onChat={handleChat} />
-            ))
+            <div className="grid grid-cols-2 gap-3">
+              {listings.map((listing) => (
+                listing?._id ? (
+                  <ListingCard
+                    key={listing._id}
+                    listing={listing}
+                  />
+                ) : null
+              ))}
+            </div>
           ) : (
             <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-border-light">
-              <p className="text-text-muted">No homes found in this sanctuary yet.</p>
+              <div className="w-20 h-20 mx-auto mb-6 bg-brand-background/50 rounded-full flex items-center justify-center">
+                <MapPin size={32} className="text-brand-secondary/50" />
+              </div>
+              <h3 className="text-xl font-headings font-bold text-brand-primary mb-2">
+                No listings in {searchLocality || 'this area'}
+              </h3>
+              <p className="text-text-muted mb-6 max-w-xs mx-auto">
+                {searchLocality
+                  ? `We couldn't find any homes in "${searchLocality}". Try a nearby locality or clear your search.`
+                  : 'Your personalized feed is empty. Adjust your filters or explore other areas.'}
+              </p>
+              <div className="flex items-center justify-center gap-3 flex-wrap">
+                {searchLocality && (
+                  <button
+                    onClick={() => setSearchLocality('')}
+                    className="btn-outline flex items-center gap-2"
+                  >
+                    <Filter size={16} />
+                    Clear search
+                  </button>
+                )}
+                <button
+                  onClick={() => setActiveCategory('All')}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  <Plus size={16} />
+                  Explore all areas
+                </button>
+              </div>
             </div>
           )}
         </section>
-
-        {/* Bento Promotion */}
-        <section className="bg-brand-primary text-white rounded-[2.5rem] p-10 space-y-6 overflow-hidden relative group">
-          <div className="relative z-10 space-y-4">
-            <h3 className="text-3xl font-headings font-bold leading-tight">Join NestNagar <br/>Partner Program</h3>
-            <p className="text-white/70 text-sm max-w-[200px]">List your property with us and get verified within 24 hours.</p>
-            <button className="bg-brand-cta text-white px-8 py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:scale-105 transition-transform active:scale-95 shadow-xl shadow-brand-cta/20">
-              Learn More
-              <Sparkles size={16} />
-            </button>
-          </div>
-          <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-brand-secondary/20 rounded-full blur-3xl group-hover:bg-brand-secondary/40 transition-all duration-700"></div>
-        </section>
       </main>
+
+      {/* Filter Drawer */}
+      <FilterDrawer
+        isOpen={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onApply={handleFiltersApply}
+        resultsCount={listings.length}
+      />
 
       <BottomNav />
     </div>

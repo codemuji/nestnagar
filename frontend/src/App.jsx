@@ -15,6 +15,7 @@ import EditListing from './features/dashboard/pages/EditListing';
 import Profile from './features/profile/pages/Profile';
 import PartnersFeed from './features/partners/pages/PartnersFeed';
 import CreatePartnerCard from './features/partners/pages/CreatePartnerCard';
+import SWUpdate from './components/SWUpdate';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -167,6 +168,7 @@ function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+      <SWUpdate />
     </Router>
   );
 }

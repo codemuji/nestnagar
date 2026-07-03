@@ -7,7 +7,8 @@ import {
   deleteListing,
   getPersonalisedListings,
   getMyListings,
-  getDashboardStats
+  getDashboardStats,
+  getLocalitiesAutocomplete
 } from "../controllers/listing.js";
 import { protect, authorize } from "../middleware/auth.js";
 import upload from "../middleware/upload.js";
@@ -16,6 +17,7 @@ const router = express.Router();
 
 // Public routes
 router.get("/", getListings);
+router.get("/localities/autocomplete", getLocalitiesAutocomplete);
 router.get("/personalised", protect, authorize("seeker"), getPersonalisedListings);
 router.get("/my", protect, authorize("broker", "owner"), getMyListings);
 router.get("/stats", protect, authorize("broker", "owner"), getDashboardStats);

@@ -1,88 +1,83 @@
-import React from 'react';
-import { MapPin, MessageSquare, Heart, ShieldCheck, User } from 'lucide-react';
+import React, { useState } from 'react';
+import { MapPin, Heart, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Button from '../../../components/Button';
 
-const ListingCard = ({ listing, onChat }) => {
-  const { 
-    _id, title, price, locality, type, photos, 
-    posterRole, amenities, genderAllowed 
+const ListingCard = ({ listing }) => {
+  const {
+    _id, title, price, locality, type, photos,
+    posterRole,
   } = listing;
 
   const displayPrice = new Intl.NumberFormat('en-IN').format(price);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  const fallbackImage = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop';
+  const imageSrc = (photos?.[0] && !imageError) ? photos[0] : fallbackImage;
 
   return (
-    <div className="group bg-white rounded-[1.5rem] overflow-hidden transition-all duration-300 shadow-card hover:shadow-hover border border-border-light/50">
-      <div className="relative aspect-[4/3] w-full overflow-hidden">
-        <img 
-          src={photos[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop'} 
+    <Link
+      to={`/listings/${_id}`}
+      className="group block bg-white rounded-2xl overflow-hidden transition-all duration-300 shadow-card hover:shadow-hover border border-border-light/50 active:scale-[0.98]"
+    >
+      <div className="relative aspect-square w-full overflow-hidden">
+        {!imageLoaded && (
+          <div
+            className="absolute inset-0 w-full h-full object-cover blur-[20px] scale-110 bg-brand-background"
+            style={{ backgroundImage: `url(${imageSrc})` }}
+            aria-hidden="true"
+          />
+        )}
+        <img
+          src={imageSrc}
           alt={title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+          loading="lazy"
+          className={`w-full h-full object-cover transition-all duration-700 ${
+            imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+          }`}
+          onLoad={() => setImageLoaded(true)}
+          onError={() => {
+            if (!imageError) setImageError(true);
+            setImageLoaded(true);
+          }}
         />
-        <div className="absolute top-4 left-4 flex gap-2">
-          {posterRole === 'owner' ? (
-            <span className="px-3 py-1 bg-brand-secondary text-white text-[10px] font-bold uppercase tracking-widest rounded-full shadow-lg flex items-center gap-1">
-              <ShieldCheck size={12} />
-              Direct Owner
-            </span>
-          ) : (
-            <span className="px-3 py-1 bg-brand-primary text-white text-[10px] font-bold uppercase tracking-widest rounded-full shadow-lg">
-              Broker
-            </span>
-          )}
-        </div>
-        <button className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/40 transition-all">
-          <Heart size={20} />
+
+        {posterRole === 'owner' && (
+          <span className="absolute top-2 left-2 px-2 py-0.5 bg-brand-secondary text-white text-[8px] font-bold uppercase tracking-widest rounded-full shadow-md flex items-center gap-1">
+            <ShieldCheck size={9} />
+            Owner
+          </span>
+        )}
+
+        <button
+          onClick={(e) => e.preventDefault()}
+          className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur-md rounded-full text-text-muted hover:text-brand-cta transition-all"
+          aria-label="Save"
+        >
+          <Heart size={14} />
         </button>
       </div>
 
-      <div className="p-5 space-y-4">
-        <div className="flex justify-between items-start">
-          <div className="space-y-1">
-            <p className="text-brand-cta font-headings text-2xl font-bold">
-              ₹{displayPrice}<span className="text-xs font-normal text-text-muted ml-1">/mo</span>
-            </p>
-            <h3 className="text-brand-primary font-bold text-lg leading-tight line-clamp-1">{title}</h3>
-            <div className="flex items-center gap-1 text-text-secondary text-sm">
-              <MapPin size={14} className="text-brand-secondary" />
-              <span>{locality}</span>
-            </div>
-          </div>
-          <div className="bg-brand-background px-3 py-1.5 rounded-lg border border-border-default/50">
-            <p className="text-[9px] text-text-muted uppercase font-bold tracking-tighter">Type</p>
-            <p className="text-xs font-bold text-brand-secondary capitalize">{type.replace('-', ' ')}</p>
-          </div>
+      <div className="p-3 space-y-1.5">
+        <div className="flex justify-between items-baseline gap-2">
+          <p className="text-brand-cta font-headings text-base font-bold leading-none truncate">
+            ₹{displayPrice}<span className="text-[10px] font-normal text-text-muted ml-0.5">/mo</span>
+          </p>
+          <span className="text-[9px] font-bold text-brand-secondary uppercase tracking-wider truncate">
+            {type.replace('-', ' ')}
+          </span>
         </div>
 
-        {/* Amenities Preview */}
-        <div className="flex items-center gap-4 text-text-muted py-1 border-y border-border-light/30">
-          {amenities.slice(0, 3).map((amt, index) => (
-            <div key={index} className="flex items-center gap-1.5">
-              <span className="text-[10px] font-medium">{amt}</span>
-            </div>
-          ))}
-          {amenities.length > 3 && (
-            <span className="text-[10px] font-medium text-brand-secondary">+{amenities.length - 3} more</span>
-          )}
-        </div>
+        <h3 className="text-brand-primary font-bold text-sm leading-tight line-clamp-1">
+          {title}
+        </h3>
 
-        <div className="grid grid-cols-2 gap-3 pt-2">
-          <Link to={`/listings/${_id}`}>
-            <Button variant="outline" className="w-full h-11 text-xs">
-              View Details
-            </Button>
-          </Link>
-          <Button 
-            onClick={() => onChat(_id)}
-            variant="primary" 
-            className="w-full h-11 text-xs bg-brand-primary hover:bg-brand-primary/90"
-          >
-            <MessageSquare size={16} />
-            Chat Now
-          </Button>
+        <div className="flex items-center gap-1 text-text-secondary text-xs">
+          <MapPin size={11} className="text-brand-secondary shrink-0" />
+          <span className="truncate">{locality}</span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

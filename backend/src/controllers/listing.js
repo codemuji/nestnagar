@@ -4,6 +4,27 @@ import Conversation from "../models/Conversation.js";
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 
+// GET /listings/localities/autocomplete
+export const getLocalitiesAutocomplete = async (req, res) => {
+  try {
+    const { q = '' } = req.query;
+    const regex = new RegExp(q, 'i');
+    
+    // Get unique localities from listings
+    const localities = await Listing.aggregate([
+      { $match: { locality: regex, status: 'available' } },
+      { $group: { _id: '$locality', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+      { $project: { _id: 0, locality: '$_id', count: 1 } }
+    ]);
+    
+    res.status(200).json(localities.map(l => l.locality));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // GET /listings/stats
 export const getDashboardStats = async (req, res) => {
   try {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { 
@@ -12,7 +12,15 @@ import {
   Loader2,
   MapPin,
   Calendar,
-  Users
+  Users,
+  Mic,
+  Image,
+  X,
+  Clipboard,
+  AlertCircle,
+  ChevronDown,
+  MoreHorizontal,
+  ChevronRight
 } from 'lucide-react';
 import { getMessages, getConversations, markRead } from '../services/chatService';
 import { initSocket, getSocket } from '../socket';
@@ -27,9 +35,39 @@ const ChatRoom = () => {
   const [conversation, setConversation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingUsers, setTypingUsers] = useState([]);
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
   
   const scrollRef = useRef();
+  const messagesEndRef = useRef();
   const socketRef = useRef();
+  const typingTimeoutRef = useRef();
+  const textareaRef = useRef();
+
+  // Emoji list
+  const EMOJIS = [
+    '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
+    '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
+    '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩',
+    '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣',
+    '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬',
+    '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗',
+    '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯',
+    '😦', '😧', '😮', '😲', '😴', '🤤', '😪', '😵', '🤐', '🥴',
+    '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿',
+    '👹', '👺', '💀', '☠️', '👻', '👽', '👾', '🤖', '💩', '😺',
+    '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾', '🙈', '🙉',
+    '🙊', '💋', '💌', '💘', '💝', '💖', '💗', '💓', '💞', '💕',
+    '💟', '❣️', '💔', '❤️', '🧡', '💛', '💚', '💙', '💜', '🤎',
+    '🖤', '🤍', '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙',
+    '👈', '👉', '👆', '🖕', '👇', '☝️', '👋', '🤚', '🖐️', '✋',
+    '🤝', '🙏', '🙌', '👐', '🤲', '🤲', '💪', '🦾', '🦵', '🦿',
+    '🦶', '👣', '👂', '🦻', '👃', '🧠', '🫀', '🫁', '🦷', '🦴',
+    '👀', '👁️', '👅', '👄', '💋', '🩸', '🩹', '🩺', '💊', '💉',
+  ];
 
   useEffect(() => {
     // 1. Fetch conversation details & messages
@@ -62,7 +100,16 @@ const ChatRoom = () => {
     // 3. Listen for new messages
     socketRef.current.on('new-message', (message) => {
       if (message.conversationId === id) {
-        setMessages((prev) => [...prev, message]);
+        setMessages((prev) => {
+          // Check if optimistic message already exists
+          const exists = prev.some(m => m._id === message._id || m.tempId === message._id);
+          if (exists) {
+            return prev.map(m => 
+              m.tempId === message._id ? { ...message, status: 'sent' } : m
+            );
+          }
+          return [...prev, message];
+        });
         
         // If incoming message, mark read
         const myId = user?.id || user?._id;
@@ -78,8 +125,39 @@ const ChatRoom = () => {
       if (conversationId === id) {
         setMessages((prev) =>
           prev.map((msg) => {
-            if (msg.senderId !== userId && !msg.readBy.includes(userId)) {
-              return { ...msg, readBy: [...msg.readBy, userId] };
+            if (msg.senderId !== userId && !msg.readBy?.includes(userId)) {
+              return { ...msg, readBy: [...(msg.readBy || []), userId] };
+            }
+            return msg;
+          })
+        );
+      }
+    });
+
+    // 5. Listen for typing indicators
+    socketRef.current.on('user-typing', ({ conversationId, userId, userName, isTyping: typing }) => {
+      if (conversationId === id) {
+        setTypingUsers(prev => {
+          if (typing) {
+            return [...prev.filter(u => u.id !== userId), { id: userId, name: userName }];
+          }
+          return prev.filter(u => u.id !== userId);
+        });
+      }
+    });
+
+    // 6. Listen for message reactions
+    socketRef.current.on('message-reaction', ({ conversationId, messageId, emoji, userId }) => {
+      if (conversationId === id) {
+        setMessages(prev => 
+          prev.map(msg => {
+            if (msg._id === messageId || msg.tempId === messageId) {
+              const reactions = { ...msg.reactions };
+              if (!reactions[emoji]) reactions[emoji] = [];
+              if (!reactions[emoji].includes(userId)) {
+                reactions[emoji] = [...reactions[emoji], userId];
+              }
+              return { ...msg, reactions };
             }
             return msg;
           })
@@ -91,25 +169,97 @@ const ChatRoom = () => {
       if (socketRef.current) {
         socketRef.current.off('new-message');
         socketRef.current.off('conversation-read');
+        socketRef.current.off('user-typing');
+        socketRef.current.off('message-reaction');
       }
     };
   }, [id, token, user]);
 
   useEffect(() => {
     // Auto-scroll to bottom
-    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
+  // Typing indicator
+  const handleTyping = useCallback(() => {
+    if (!socketRef.current) return;
+    
+    socketRef.current.emit('typing', { conversationId: id, isTyping: true });
+    
+    clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      socketRef.current.emit('typing', { conversationId: id, isTyping: false });
+    }, 2000);
+  }, [id]);
 
+  const handleSendMessage = useCallback((e) => {
+    e.preventDefault();
+    if (!newMessage.trim() && !replyingTo) return;
+
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const optimisticMessage = {
+      _id: tempId,
+      tempId,
+      conversationId: id,
+      senderId: user?.id || user?._id,
+      text: newMessage.trim(),
+      createdAt: new Date().toISOString(),
+      status: 'pending',
+      readBy: [],
+      reactions: {},
+      replyTo: replyingTo ? {
+        _id: replyingTo._id,
+        text: replyingTo.text,
+        senderId: replyingTo.senderId
+      } : null,
+      myId: user?.id || user?._id
+    };
+
+    setMessages(prev => [...prev, optimisticMessage]);
+    setNewMessage('');
+    setReplyingTo(null);
+    handleTyping(); // Stop typing indicator
+
+    // Send via socket
     socketRef.current.emit('send-message', {
       conversationId: id,
-      text: newMessage
+      text: optimisticMessage.text,
+      replyTo: replyingTo?._id,
+      tempId
     });
+  }, [newMessage, replyingTo, id, user]);
 
-    setNewMessage('');
+  const handleReact = useCallback((messageId, emoji) => {
+    socketRef.current.emit('react', { conversationId: id, messageId, emoji });
+  }, [id]);
+
+  const handleDelete = useCallback((messageId) => {
+    // TODO: Implement delete via socket/API
+    setMessages(prev => prev.filter(m => m._id !== messageId && m.tempId !== messageId));
+  }, []);
+
+  const handleCopy = useCallback((text) => {
+    navigator.clipboard.writeText(text);
+    // Could show toast here
+  }, []);
+
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e);
+    } else {
+      handleTyping();
+    }
+  }, [handleSendMessage, handleTyping]);
+
+  const insertEmoji = (emoji) => {
+    setNewMessage(prev => prev + emoji);
+    textareaRef.current?.focus();
+  };
+
+  const startReply = (message) => {
+    setReplyingTo(message);
+    textareaRef.current?.focus();
   };
 
   if (loading) {
@@ -122,6 +272,7 @@ const ChatRoom = () => {
   }
 
   const otherParticipant = conversation?.participants.find(p => p._id !== user.id && p._id !== user._id);
+  const myId = user?.id || user?._id;
 
   return (
     <div className="min-h-screen bg-brand-background flex flex-col h-screen overflow-hidden">
@@ -135,16 +286,24 @@ const ChatRoom = () => {
             <ArrowLeft size={20} />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-brand-accent/20 bg-white">
-              <img 
-                src={otherParticipant?.profilePhoto || `https://ui-avatars.com/api/?name=${otherParticipant?.name}`} 
-                alt="avatar" 
-                className="w-full h-full object-cover"
-              />
+            <div className="relative">
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-brand-accent/20 bg-white">
+                <img 
+                  src={otherParticipant?.profilePhoto || `https://ui-avatars.com/api/?name=${otherParticipant?.name}`} 
+                  alt="avatar" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              {/* Online indicator */}
+              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-brand-background rounded-full" />
             </div>
             <div>
               <h1 className="font-headings font-bold text-brand-primary leading-tight text-sm">{otherParticipant?.name}</h1>
-              <p className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest">Active Recently</p>
+              <p className="text-[10px] font-bold text-brand-secondary uppercase tracking-widest">
+                {typingUsers.length > 0 
+                  ? `${typingUsers.map(u => u.name).join(', ')} typing...`
+                  : 'Active Recently'}
+              </p>
             </div>
           </div>
         </div>
@@ -213,57 +372,160 @@ const ChatRoom = () => {
           </div>
         )}
 
+        {/* Date separator */}
         <div className="flex justify-center my-4">
           <span className="px-4 py-1 rounded-full bg-border-light/30 text-text-muted text-[10px] font-bold uppercase tracking-[0.2em]">Today</span>
         </div>
 
+        {/* Empty state */}
+        {messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+            <div className="w-24 h-24 rounded-full bg-brand-background/50 flex items-center justify-center mb-4">
+              <MessageSquare size={48} className="text-brand-secondary/50" />
+            </div>
+            <h3 className="text-lg font-headings font-bold text-brand-primary mb-2">
+              No messages yet
+            </h3>
+            <p className="text-text-muted mb-6 max-w-xs">
+              Start the conversation! Send a message about the property or introduce yourself.
+            </p>
+            <button
+              onClick={() => {
+                const starters = [
+                  "Hi! Is this still available?",
+                  "Hi, I'm interested in this property. Can we schedule a viewing?",
+                  "Hello! What's the earliest move-in date?",
+                  "Hi! Are utilities included in the rent?"
+                ];
+                setNewMessage(starters[Math.floor(Math.random() * starters.length)]);
+                textareaRef.current?.focus();
+              }}
+              className="btn-outline flex items-center gap-2"
+            >
+              <ChevronRight size={16} />
+              Try a conversation starter
+            </button>
+          </div>
+        )}
+
         {messages.map((msg, index) => (
           <ChatBubble 
-            key={msg._id || index} 
-            message={msg} 
-            isMe={msg.senderId === user.id || msg.senderId === user._id} 
+            key={msg._id || msg.tempId || index} 
+            message={{ ...msg, myId }}
+            isMe={msg.senderId === myId} 
+            onReply={startReply}
+            onReact={handleReact}
+            onDelete={handleDelete}
+            onCopy={handleCopy}
           />
         ))}
-        <div ref={scrollRef} />
+        <div ref={messagesEndRef} />
       </main>
 
       {/* Input Area */}
-      <footer className="fixed bottom-0 left-0 w-full bg-brand-background/90 backdrop-blur-md px-6 py-4 pb-safe-bottom z-50 border-t border-border-light/30">
-        <div className="max-w-4xl mx-auto flex items-end gap-3">
-          <button className="mb-2 p-2 text-text-muted hover:text-brand-secondary transition-colors">
-            <PlusCircle size={24} />
-          </button>
-          
-          <div className="flex-grow relative group">
-            <textarea 
-              className="w-full bg-white border-none focus:ring-4 focus:ring-brand-secondary/5 rounded-2xl py-3 px-5 pr-12 text-brand-primary placeholder:text-text-muted/50 resize-none min-h-[48px] max-h-32 transition-all shadow-sm"
-              placeholder="Type a message..."
-              rows="1"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage(e);
-                }
-              }}
-            ></textarea>
-            <button className="absolute right-3 bottom-3 text-text-muted hover:text-brand-secondary transition-colors">
-              <Smile size={20} />
+      <footer className="fixed bottom-0 left-0 w-full bg-brand-background/95 backdrop-blur-md px-6 py-3 pb-safe-bottom z-50 border-t border-border-light/30">
+        <div className="max-w-4xl mx-auto">
+          {/* Reply preview */}
+          {replyingTo && (
+            <div className="mb-3 p-3 bg-brand-primary/5 rounded-2xl border border-brand-primary/20 flex items-center justify-between animate-in slide-in-from-bottom-2 duration-300">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="w-2 h-8 bg-brand-primary rounded-r-full" />
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold text-brand-primary uppercase tracking-wider mb-0.5">Replying to</p>
+                  <p className="text-sm text-brand-primary/80 truncate">{replyingTo.text}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setReplyingTo(null)}
+                className="p-1 text-brand-primary/70 hover:text-brand-primary hover:bg-brand-primary/10 rounded-full transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
+
+          {/* Attachment menu */}
+          {showAttachMenu && (
+            <div className="mb-3 flex gap-2 animate-in fade-in-20 duration-200">
+              {[
+                { icon: Image, label: 'Photo', color: 'text-brand-primary' },
+                { icon: Mic, label: 'Voice', color: 'text-brand-secondary' },
+                { icon: Clipboard, label: 'Location', color: 'text-brand-cta' },
+                { icon: Smile, label: 'Emoji', color: 'text-amber-500' }
+              ].map((item, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => { setShowAttachMenu(false); /* TODO: handle */ }}
+                  className={`flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl bg-white border border-border-light/50 shadow-sm flex-1 transition-all active:scale-95 ${item.color}`}
+                >
+                  <item.icon size={24} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">{item.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-end gap-3">
+            <button
+              onClick={() => setShowAttachMenu(!showAttachMenu)}
+              className="mb-1 p-2 text-text-muted hover:text-brand-secondary transition-colors rounded-full hover:bg-brand-background"
+            >
+              <PlusCircle size={24} />
+            </button>
+            
+            <div className="flex-grow relative">
+              <textarea
+                ref={textareaRef}
+                className="w-full bg-white border-none focus:ring-4 focus:ring-brand-secondary/5 rounded-2xl py-3 px-5 pr-12 text-brand-primary placeholder:text-text-muted/50 resize-none min-h-[48px] max-h-40 transition-all shadow-sm"
+                placeholder={replyingTo ? "Type your reply..." : "Type a message..."}
+                rows="1"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+              ></textarea>
+              
+              <div className="absolute right-3 bottom-3 flex items-center gap-1">
+                <button
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className="p-2 text-text-muted hover:text-brand-secondary transition-colors rounded-full hover:bg-brand-background"
+                >
+                  <Smile size={20} />
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={handleSendMessage}
+              disabled={!newMessage.trim()}
+              className="mb-1 w-12 h-12 flex items-center justify-center rounded-xl bg-brand-cta text-white shadow-xl shadow-brand-cta/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+            >
+              <Send size={20} fill="currentColor" />
             </button>
           </div>
 
-          <button 
-            onClick={handleSendMessage}
-            disabled={!newMessage.trim()}
-            className="mb-1 w-12 h-12 flex items-center justify-center rounded-xl bg-brand-cta text-white shadow-xl shadow-brand-cta/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
-          >
-            <Send size={20} fill="currentColor" />
-          </button>
+          {/* Emoji Picker */}
+          {showEmojiPicker && (
+            <div className="mt-2 w-full max-h-48 overflow-y-auto bg-white rounded-2xl border border-border-light/50 shadow-xl p-2 animate-in fade-in-20 duration-200">
+              <div className="grid grid-cols-8 gap-1">
+                {EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => insertEmoji(emoji)}
+                    className="p-2 text-2xl hover:bg-brand-background rounded-xl transition-colors"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </footer>
     </div>
   );
 };
+
+// Import missing icons
+import { MessageSquare } from 'lucide-react';
 
 export default ChatRoom;

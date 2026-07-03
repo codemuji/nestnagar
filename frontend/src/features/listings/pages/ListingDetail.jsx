@@ -1,31 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Share2, 
-  MapPin, 
-  ShieldCheck, 
-  MessageSquare, 
-  Heart, 
-  Wifi, 
-  Wind, 
-  Utensils, 
+import {
+  ArrowLeft,
+  Share2,
+  MapPin,
+  ShieldCheck,
+  MessageSquare,
+  Heart,
+  Phone,
+  Wifi,
+  Wind,
+  Utensils,
   Car,
   ChevronRight,
-  Loader2,
-  Sparkles
+  Eye,
+  Calendar,
+  Users,
+  CheckCircle2,
+  ExternalLink,
+  Copy,
+  X,
 } from 'lucide-react';
 import Button from '../../../components/Button';
+import ImageGallery from '../components/ImageGallery';
+import SimilarListings from '../components/SimilarListings';
+import ListingDetailSkeleton from '../components/ListingDetailSkeleton';
 import { getListingById } from '../services/listingService';
 import { startConversation } from '../../chat/services/chatService';
+import { useSavedListings } from '../../../hooks/useSavedListings';
 
 const ListingDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeImage, setActiveImage] = useState(0);
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showShareToast, setShowShareToast] = useState(false);
+  const { toggleSave, isSaved } = useSavedListings();
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -50,13 +61,52 @@ const ListingDetail = () => {
     }
   };
 
+  const handleCall = () => {
+    if (listing?.postedBy?.phone) {
+      window.location.href = `tel:${listing.postedBy.phone}`;
+    }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const shareData = {
+      title: listing?.title || 'Check out this property',
+      text: `Check out this ${listing?.type || 'property'} in ${listing?.locality || 'your area'} on NestNagar`,
+      url: shareUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          handleCopyLink(shareUrl);
+        }
+      }
+    } else {
+      handleCopyLink(shareUrl);
+    }
+  };
+
+  const handleCopyLink = async (url) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setShowShareToast(true);
+      setTimeout(() => setShowShareToast(false), 2500);
+    } catch (err) {
+      console.warn('Failed to copy link:', err);
+    }
+  };
+
+  const handleDirections = () => {
+    const query = listing?.coordinates?.lat && listing?.coordinates?.lng
+      ? `${listing.coordinates.lat},${listing.coordinates.lng}`
+      : encodeURIComponent(`${listing?.locality}, Itanagar, Arunachal Pradesh`);
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${query}`, '_blank', 'noopener,noreferrer');
+  };
+
   if (loading) {
-    return (
-      <div className="min-h-screen bg-brand-background flex flex-col items-center justify-center p-6">
-        <Loader2 className="animate-spin text-brand-secondary mb-4" size={48} />
-        <p className="font-headings font-medium italic text-text-muted">Loading sanctuary details...</p>
-      </div>
-    );
+    return <ListingDetailSkeleton />;
   }
 
   if (!listing) {
@@ -76,51 +126,42 @@ const ListingDetail = () => {
   };
 
   const displayPrice = new Intl.NumberFormat('en-IN').format(listing.price);
+  const deposit = listing.deposit ? new Intl.NumberFormat('en-IN').format(listing.deposit) : null;
+  const saved = isSaved(listing._id);
 
   return (
     <div className="min-h-screen bg-brand-background pb-32">
       {/* Top Navigation */}
       <header className="fixed top-0 left-0 w-full flex justify-between items-center px-6 py-4 bg-brand-background/80 backdrop-blur-md z-50 border-b border-border-light/30">
-        <button 
+        <button
           onClick={() => navigate(-1)}
           className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-brand-primary active:scale-95 transition-all"
+          aria-label="Go back"
         >
           <ArrowLeft size={20} />
         </button>
         <h1 className="text-lg font-bold text-brand-primary tracking-tighter uppercase">NestNagar</h1>
-        <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-brand-primary active:scale-95 transition-all">
+        <button
+          onClick={handleShare}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-brand-primary active:scale-95 transition-all"
+          aria-label="Share listing"
+        >
           <Share2 size={20} />
         </button>
       </header>
 
+      {/* Share Toast */}
+      {showShareToast && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] px-4 py-2.5 bg-brand-primary text-white text-sm font-medium rounded-full shadow-lg flex items-center gap-2 animate-in fade-in-50 slide-in-from-top-5 duration-300">
+          <CheckCircle2 size={16} />
+          Link copied to clipboard!
+        </div>
+      )}
+
       <main>
         {/* Image Gallery */}
         <section className="pt-20 px-4">
-          <div className="flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory">
-            {listing.photos.map((photo, idx) => (
-              <div 
-                key={idx}
-                className="flex-none w-[85%] aspect-[4/5] snap-center rounded-3xl overflow-hidden shadow-card"
-              >
-                <img src={photo} alt={`${listing.title} ${idx}`} className="w-full h-full object-cover" />
-              </div>
-            ))}
-            {listing.photos.length === 0 && (
-              <div className="flex-none w-[85%] aspect-[4/5] snap-center rounded-3xl overflow-hidden bg-border-light flex items-center justify-center">
-                <p className="text-text-muted">No photos available</p>
-              </div>
-            )}
-          </div>
-          <div className="flex justify-center mt-6 gap-1.5">
-            {listing.photos.map((_, idx) => (
-              <div 
-                key={idx}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  activeImage === idx ? 'w-6 bg-brand-secondary' : 'w-1.5 bg-border-default'
-                }`}
-              ></div>
-            ))}
-          </div>
+          <ImageGallery photos={listing.photos || []} title={listing.title} />
         </section>
 
         {/* Content */}
@@ -128,9 +169,16 @@ const ListingDetail = () => {
           {/* Header Info */}
           <div className="space-y-2">
             <div className="flex justify-between items-end">
-              <p className="text-4xl font-headings font-bold text-brand-cta tracking-tight">
-                ₹{displayPrice}<span className="text-sm font-normal text-text-muted ml-1">/mo</span>
-              </p>
+              <div>
+                <p className="text-4xl font-headings font-bold text-brand-cta tracking-tight">
+                  ₹{displayPrice}<span className="text-sm font-normal text-text-muted ml-1">/mo</span>
+                </p>
+                {deposit && (
+                  <p className="text-xs text-text-muted mt-1">
+                    Deposit: <span className="font-semibold text-brand-secondary">₹{deposit}</span>
+                  </p>
+                )}
+              </div>
               <span className="px-4 py-1.5 bg-brand-secondary/10 text-brand-secondary text-xs font-bold rounded-full uppercase tracking-widest border border-brand-secondary/20">
                 Available Now
               </span>
@@ -142,65 +190,113 @@ const ListingDetail = () => {
             </div>
           </div>
 
+          {/* Quick Stats Row */}
+          <div className="grid grid-cols-3 gap-2 bg-white rounded-2xl p-4 shadow-sm border border-border-light/30">
+            <div className="flex flex-col items-center gap-1 text-center">
+              <Eye size={18} className="text-brand-secondary" />
+              <p className="text-sm font-bold text-brand-primary">{listing.views || 0}</p>
+              <p className="text-[9px] uppercase font-bold tracking-wider text-text-muted">Views</p>
+            </div>
+            <div className="flex flex-col items-center gap-1 text-center border-x border-border-light/30">
+              <Users size={18} className="text-brand-secondary" />
+              <p className="text-sm font-bold text-brand-primary capitalize">
+                {listing.genderAllowed === 'any' ? 'All' : listing.genderAllowed}
+              </p>
+              <p className="text-[9px] uppercase font-bold tracking-wider text-text-muted">Allowed</p>
+            </div>
+            <div className="flex flex-col items-center gap-1 text-center">
+              <Calendar size={18} className="text-brand-secondary" />
+              <p className="text-sm font-bold text-brand-primary">
+                {new Date(listing.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+              </p>
+              <p className="text-[9px] uppercase font-bold tracking-wider text-text-muted">Posted</p>
+            </div>
+          </div>
+
           {/* Owner Info Card */}
-          <div className="p-5 bg-white rounded-3xl shadow-card border border-border-light/50 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-brand-background shadow-inner">
-                <img 
-                  src={listing.postedBy?.profilePhoto || `https://ui-avatars.com/api/?name=${listing.postedBy?.name}`} 
-                  alt="owner" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div>
-                <p className="font-bold text-brand-primary">{listing.postedBy?.name}</p>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <span className="px-2 py-0.5 bg-brand-accent/10 text-brand-accent text-[10px] font-bold rounded-full uppercase border border-brand-accent/20 flex items-center gap-1">
-                    <ShieldCheck size={10} />
-                    {listing.posterRole === 'owner' ? 'Direct Owner' : 'Verified Broker'}
-                  </span>
+          <div className="p-5 bg-white rounded-3xl shadow-card border border-border-light/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-brand-background shadow-inner">
+                  <img
+                    src={listing.postedBy?.profilePhoto || `https://ui-avatars.com/api/?name=${listing.postedBy?.name}&background=random`}
+                    alt="owner"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <p className="font-bold text-brand-primary">{listing.postedBy?.name}</p>
+                  <div className="flex items-center gap-1 mt-1 flex-wrap">
+                    <span className="px-2 py-0.5 bg-brand-accent/10 text-brand-accent text-[10px] font-bold rounded-full uppercase border border-brand-accent/20 flex items-center gap-1">
+                      <ShieldCheck size={10} />
+                      {listing.posterRole === 'owner' ? 'Direct Owner' : 'Verified Broker'}
+                    </span>
+                    {listing.postedBy?.isVerified && (
+                      <span className="px-2 py-0.5 bg-brand-secondary/10 text-brand-secondary text-[10px] font-bold rounded-full uppercase border border-brand-secondary/20 flex items-center gap-1">
+                        <CheckCircle2 size={10} />
+                        ID Verified
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest">Last active</p>
-              <p className="text-xs font-bold text-brand-primary">Recently</p>
+              <div className="text-right">
+                <p className="text-[10px] text-text-muted uppercase font-bold tracking-widest">Last active</p>
+                <p className="text-xs font-bold text-brand-primary">Recently</p>
+              </div>
             </div>
           </div>
 
           {/* Amenities */}
           <div className="space-y-4">
             <h3 className="text-sm font-bold text-brand-primary uppercase tracking-[0.2em]">Key Amenities</h3>
-            <div className="grid grid-cols-4 gap-4">
-              {listing.amenities.map((amt, idx) => (
-                <div key={idx} className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl shadow-sm border border-border-light/30">
-                  <div className="text-brand-secondary">
-                    {amenityIcons[amt] || <Sparkles size={20} />}
+            {listing.amenities?.length > 0 ? (
+              <div className="grid grid-cols-4 gap-4">
+                {listing.amenities.map((amt, idx) => (
+                  <div key={idx} className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl shadow-sm border border-border-light/30">
+                    <div className="text-brand-secondary">
+                      {amenityIcons[amt] || <Wifi size={20} />}
+                    </div>
+                    <span className="text-[10px] font-bold text-text-secondary uppercase text-center">{amt}</span>
                   </div>
-                  <span className="text-[10px] font-bold text-text-secondary uppercase">{amt}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl p-6 text-center border border-border-light/30">
+                <p className="text-sm text-text-muted">No amenities listed for this property.</p>
+              </div>
+            )}
           </div>
 
           {/* Description */}
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-brand-primary uppercase tracking-[0.2em]">About this nest</h3>
             <p className={`text-sm leading-relaxed text-text-secondary ${!showFullDescription && 'line-clamp-3'}`}>
-              {listing.description}
+              {listing.description || 'No description provided for this listing.'}
             </p>
-            <button 
-              onClick={() => setShowFullDescription(!showFullDescription)}
-              className="text-sm font-bold text-brand-secondary flex items-center gap-1 uppercase tracking-tight hover:underline"
-            >
-              {showFullDescription ? 'Show Less' : 'Read More'} 
-              <ChevronRight size={16} className={showFullDescription ? '-rotate-90 transition-transform' : 'rotate-90 transition-transform'} />
-            </button>
+            {listing.description && listing.description.length > 100 && (
+              <button
+                onClick={() => setShowFullDescription(!showFullDescription)}
+                className="text-sm font-bold text-brand-secondary flex items-center gap-1 uppercase tracking-tight hover:underline"
+              >
+                {showFullDescription ? 'Show Less' : 'Read More'}
+                <ChevronRight size={16} className={showFullDescription ? '-rotate-90 transition-transform' : 'rotate-90 transition-transform'} />
+              </button>
+            )}
           </div>
 
           {/* Location Map Preview */}
           <div className="space-y-4 pt-4">
-            <h3 className="text-sm font-bold text-brand-primary uppercase tracking-[0.2em]">Location</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-brand-primary uppercase tracking-[0.2em]">Location</h3>
+              <button
+                onClick={handleDirections}
+                className="text-xs font-bold text-brand-secondary flex items-center gap-1 hover:underline"
+              >
+                <ExternalLink size={12} />
+                Get Directions
+              </button>
+            </div>
             <div className="w-full h-64 rounded-[2rem] overflow-hidden shadow-card border border-border-light/50 relative">
               <iframe
                 title="Sanctuary Location Map"
@@ -222,22 +318,57 @@ const ListingDetail = () => {
               </p>
             )}
           </div>
+
+          {/* Similar Listings */}
+          <SimilarListings currentListing={listing} />
         </section>
       </main>
 
-      {/* Fixed Bottom CTA */}
-      <footer className="fixed bottom-0 left-0 w-full p-6 bg-white/80 backdrop-blur-xl border-t border-border-light/30 flex items-center gap-4 z-[60]">
-        <button className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white border border-border-default text-brand-primary shadow-sm active:scale-90 transition-all hover:bg-brand-background">
-          <Heart size={24} />
-        </button>
-        <Button 
-          onClick={handleChat}
-          className="flex-1 h-14 bg-brand-cta text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-3 shadow-xl shadow-brand-cta/20 active:scale-[0.98] transition-all"
-        >
-          <MessageSquare size={22} />
-          Start Chat
-        </Button>
+      {/* Fixed Bottom CTA Bar */}
+      <footer className="fixed bottom-0 left-0 w-full p-4 bg-white/95 backdrop-blur-xl border-t border-border-light/30 z-[60]">
+        <div className="max-w-2xl mx-auto flex items-center gap-3">
+          {/* Price visible on mobile sticky CTA */}
+          <div className="hidden sm:block">
+            <p className="text-lg font-headings font-bold text-brand-cta leading-none">
+              ₹{displayPrice}
+            </p>
+            <p className="text-[10px] text-text-muted font-bold uppercase">per month</p>
+          </div>
+
+          {/* Call button */}
+          <button
+            onClick={handleCall}
+            disabled={!listing.postedBy?.phone}
+            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-border-default text-brand-primary shadow-sm active:scale-90 transition-all hover:bg-brand-background disabled:opacity-50 disabled:pointer-events-none"
+            aria-label="Call owner"
+          >
+            <Phone size={20} />
+          </button>
+
+          {/* Save button */}
+          <button
+            onClick={() => toggleSave(listing._id)}
+            className={`w-12 h-12 flex items-center justify-center rounded-2xl border shadow-sm active:scale-90 transition-all ${
+              saved
+                ? 'bg-brand-cta border-brand-cta text-white'
+                : 'bg-white border-border-default text-brand-primary hover:bg-brand-background'
+            }`}
+            aria-label={saved ? 'Unsave listing' : 'Save listing'}
+          >
+            <Heart size={20} fill={saved ? 'currentColor' : 'none'} className={saved ? 'animate-pulse' : ''} />
+          </button>
+
+          {/* Chat - Primary CTA */}
+          <Button
+            onClick={handleChat}
+            className="flex-1 h-12 bg-brand-cta text-white rounded-2xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-xl shadow-brand-cta/20 active:scale-[0.98] transition-all"
+          >
+            <MessageSquare size={20} />
+            Start Chat
+          </Button>
+        </div>
       </footer>
+
     </div>
   );
 };
