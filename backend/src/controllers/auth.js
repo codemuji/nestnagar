@@ -53,7 +53,7 @@ export const register = async (req, res) => {
       };
     }
 
-    const newUser = new User({
+    const newUser = await User.create({
       name,
       phone,
       passwordHash,
@@ -61,8 +61,6 @@ export const register = async (req, res) => {
       isVerified: true, // Assuming OTP was verified
       seekerProfile: finalSeekerProfile
     });
-
-    await newUser.save();
 
     sendToken(newUser, 201, res);
   } catch (error) {

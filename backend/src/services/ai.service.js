@@ -5,13 +5,13 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const model = new ChatMistralAI({
-  apiKey: process.env.MISTRAL_API_KEY,
-  modelName: "mistral-tiny", // or "mistral-small-latest", "mistral-medium-latest"
-  temperature: 0,
+const FALLBACK_PROFILE = (answers) => ({
+  listingTypes: ["single-room"],
+  priceRange: { min: 0, max: parseInt(answers.budget) || 10000 },
+  showPartnerOption: answers.aloneOrPartner === "partner",
+  priorityLocalities: [answers.locality],
+  feedMessage: "Welcome to NestNagar! Let's find you a great place in Itanagar.",
 });
-
-const parser = new JsonOutputParser();
 
 const onboardingPrompt = ChatPromptTemplate.fromMessages([
   ["system", `You are a housing assistant for Itanagar, Arunachal Pradesh, India.
@@ -27,30 +27,23 @@ Return ONLY a valid JSON object.`],
   ["user", "Purpose: {purpose}, Budget: {budget}, Locality: {locality}, Move-in date: {moveInDate}, Looking: {aloneOrPartner}"],
 ]);
 
-const chain = onboardingPrompt.pipe(model).pipe(parser);
+const chain = process.env.MISTRAL_API_KEY
+  ? onboardingPrompt.pipe(new ChatMistralAI({
+      apiKey: process.env.MISTRAL_API_KEY,
+      modelName: "mistral-small-latest",
+      temperature: 0,
+    })).pipe(new JsonOutputParser())
+  : null;
 
 export const generateSeekerProfile = async (answers) => {
   try {
-    const { purpose, budget, locality, moveInDate, aloneOrPartner } = answers;
-    
-    const response = await chain.invoke({
-      purpose,
-      budget,
-      locality,
-      moveInDate,
-      aloneOrPartner,
-    });
-
-    return response;
+    if (!chain) {
+      console.warn("MISTRAL_API_KEY not set — using fallback seeker profile");
+      return FALLBACK_PROFILE(answers);
+    }
+    return await chain.invoke(answers);
   } catch (error) {
-    console.error("Error generating seeker profile with Mistral:", error);
-    // Fallback profile if AI fails
-    return {
-      listingTypes: ["single-room"],
-      priceRange: { min: 0, max: parseInt(answers.budget) || 10000 },
-      showPartnerOption: answers.aloneOrPartner === "partner",
-      priorityLocalities: [answers.locality],
-      feedMessage: "Welcome to NestNagar! Let's find you a great place in Itanagar.",
-    };
+    console.error("Error generating seeker profile with Mistral:", error?.message || error);
+    return FALLBACK_PROFILE(answers);
   }
 };

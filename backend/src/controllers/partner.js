@@ -8,7 +8,7 @@ export const createPartnerCard = async (req, res) => {
       moveInDate, genderPreference, habits, bio 
     } = req.body;
 
-    const newCard = new PartnerCard({
+    const newCard = await PartnerCard.create({
       postedBy: req.user.id,
       purpose,
       budget,
@@ -18,8 +18,6 @@ export const createPartnerCard = async (req, res) => {
       habits,
       bio
     });
-
-    await newCard.save();
     res.status(201).json(newCard);
   } catch (error) {
     res.status(500).json({ message: error.message });

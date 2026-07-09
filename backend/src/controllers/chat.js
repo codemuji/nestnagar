@@ -76,26 +76,44 @@ export const getConversations = async (req, res) => {
     .populate("participants", "name profilePhoto role")
     .sort({ updatedAt: -1 });
 
-    // Manually populate contextId based on contextType
-    const populatedConversations = await Promise.all(
-      conversations.map(async (conv) => {
-        const convObj = conv.toObject();
-        if (conv.contextType === "listing") {
-          convObj.contextId = await mongoose.model("Listing").findById(conv.contextId).select("title price locality photos");
-        } else if (conv.contextType === "partnerCard") {
-          convObj.contextId = await mongoose.model("PartnerCard").findById(conv.contextId).select("preferredLocality budget purpose");
-        }
-        
-        // Count unread messages
-        convObj.unreadCount = await Message.countDocuments({
-          conversationId: conv._id,
-          senderId: { $ne: req.user.id },
-          readBy: { $ne: req.user.id }
-        });
+    const listingIds = [];
+    const partnerCardIds = [];
+    conversations.forEach(c => {
+      if (c.contextType === "listing") {
+        listingIds.push(c.contextId);
+      } else if (c.contextType === "partnerCard") {
+        partnerCardIds.push(c.contextId);
+      }
+    });
 
-        return convObj;
-      })
-    );
+    const userId = new mongoose.Types.ObjectId(req.user.id);
+    const [listings, partnerCards, unreadCounts] = await Promise.all([
+      mongoose.model("Listing").find({ _id: { $in: listingIds } }).select("title price locality photos"),
+      mongoose.model("PartnerCard").find({ _id: { $in: partnerCardIds } }).select("preferredLocality budget purpose"),
+      Message.aggregate([
+        { 
+          $match: { 
+            conversationId: { $in: conversations.map(c => c._id) }, 
+            senderId: { $ne: userId }, 
+            readBy: { $ne: userId } 
+          } 
+        },
+        { $group: { _id: "$conversationId", count: { $sum: 1 } } }
+      ])
+    ]);
+
+    const listingMap = new Map(listings.map(l => [l._id.toString(), l]));
+    const partnerMap = new Map(partnerCards.map(p => [p._id.toString(), p]));
+    const countMap = new Map(unreadCounts.map(u => [u._id.toString(), u.count]));
+
+    const populatedConversations = conversations.map(conv => {
+      const convObj = conv.toObject();
+      convObj.contextId = conv.contextType === "listing"
+        ? listingMap.get(conv.contextId.toString()) || null
+        : partnerMap.get(conv.contextId.toString()) || null;
+      convObj.unreadCount = countMap.get(conv._id.toString()) || 0;
+      return convObj;
+    });
 
     res.status(200).json(populatedConversations);
   } catch (error) {
