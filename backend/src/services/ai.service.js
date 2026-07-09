@@ -3,7 +3,7 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { JsonOutputParser } from "@langchain/core/output_parsers";
 import dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config(); // Trigger nodemon reload
 
 const FALLBACK_PROFILE = (answers) => ({
   listingTypes: ["single-room"],
