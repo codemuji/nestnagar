@@ -32,6 +32,7 @@ const chain = process.env.MISTRAL_API_KEY
       apiKey: process.env.MISTRAL_API_KEY,
       modelName: "mistral-small-latest",
       temperature: 0,
+      maxRetries: 0,
     })).pipe(new JsonOutputParser())
   : null;
 
